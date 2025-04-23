@@ -1,0 +1,11 @@
+#version 300 es
+precision mediump float;
+in vec4 finalLight;//最终光
+out vec4 fragColor;//输出到的片元颜色
+void main()
+{
+   //将计算出的颜色给此片元
+      vec3 Color=vec3(0.9,0.9,0.9);
+      fragColor = vec4(finalLight.xyz*Color,1.0);//给此片元颜色值
+
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sampel1_21</title>
+</head><body>
+<script type="text/javascript">
+	var myglobalvar="apple";//定义了全局变量
+	function myFun(){
+		var mylocalvar="sunny";//定义了局部变量
+		return("Hello"+name+".Today is"+mylocalvar+".");
+	};
+	document.write(myFun("Tom")+"<br>");
+	document.write("I like"+myglobalvar+"."+"<br>");
+	var string1="This is a string.";//使用JavaScript的基本类型-字符串变量
+	var string2="This is a string.";
+	var bool1=true;//使用JavaScript的基本类型-布尔变量
+	var bool2=false;
+	var daysinweek=7;//使用JavaScript的基本类型-数值变量
+	var pi=3.14;
+	var hexValue=0xFFFF;
+	var mydata=new Object();//创建对象
+	mydata.name="Tom";
+	mydata.weather="sunny";
+	document.write("Hello"+mydata.name+"."+"<br>");
+	document.write("Today is "+ mydata.weather+"."+"<br>");
+	var mydata1={//使用对象字面变量
+		name:"Tom",
+		weather:"Sunny"
+	};
+	document.write("Hello"+mydata1.name+"."+"<br>");
+	document.write("Today is"+mydata1.weather+"."+"<br>");
+	var mydata2={//为对象添加方法
+		name:"Tom",
+		weather:"Sunny",
+		printMessages: function(){
+			document.write("Hello"+mydata2.name+"."+"<br>");
+			document.write("Today is "+ mydata2.weather+"."+"<br>");
+		}
+	};
+	mydata2.printMessages();//读取和修改对象属性值
+	var mydata3={
+		name:"Tom",
+		weather:"Sunny"
+	};
+	mydata3.name="Jerry";
+	mydata3["weather"]="raining";
+	document.write("Hello"+mydata3.name+"."+"<br>");
+	document.write("Today is "+ mydata3.weather+"."+"<br>");
+</script>
+</body></html>

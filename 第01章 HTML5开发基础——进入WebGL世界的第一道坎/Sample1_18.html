@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sample1_18</title>
+<style type="text/css">
+a:link {color:#FF0000;}<!--未被访问的链接-->
+a:visited {color:#00FF00;}<!--已被访问的链接-->
+a:hover {color:#FF00FF;}<!--鼠标指针移动到链接上-->
+a:active {color:#0000FF;}<!--正在被点击的链接--> 
+a.one:link {color:#ff0000;}
+a.one:visited {color:#0000ff;}
+a.one:hover {font-size:150%;}
+a.two:link {color:#ff0000;}
+a.two:visited {color:#0000ff;}
+a.two:hover {font-family:'微软雅黑';}
+#customers{
+  font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+  width:100%;
+  border-collapse:collapse;}
+#customers td, #customers th{
+  font-size:1em;
+  border:1px solid #98bf21;
+  padding:3px 7px 2px 7px;}
+#customers th {
+  font-size:1.1em;
+  text-align:left;
+  padding-top:5px;
+  padding-bottom:4px;
+  background-color:#A7C942;
+  color:#ffffff;}
+#customers tr.alt td {
+  color:#000000;
+  background-color:#EAF2D3;}
+</style>
+</head>
+<body>
+<p><b><a href="Sample1_1.html" target="_blank">
+这是一个链接</a></b></p>
+<!--为了使定义生效，a:hover 必须位于 a:link 和 a:visited 之后,
+a:active 必须位于 a:hover 之后-->
+<p>对于链接，除了设置color之外，我们还可以设置背景颜色，就是在样式表中将color换为background-color即可。</p>
+<p>除了改变链接的颜色外，我们还可以改变链接的字体、尺寸等，这些实现起来并不困难，我们用到的方法全是之前讲过的：</p>
+<p><b><a class="one" href="Sample1_1.html" target="_blank">
+这个链接可以改变字体尺寸</a></b></p>
+<p><b><a class="two" href="Sample1_1.html" target="_blank">
+这个链接可以改变字体</a></b></p>
+<p>现在我们来介绍一下表格的样式表，我们首先做一个精美的表格。</p>
+<table id="customers">
+<tr>
+<th>Company</th>
+<th>Contact</th>
+<th>Country</th>
+</tr>
+<tr>
+<td>Apple</td>
+<td>Steven Jobs</td>
+<td>USA</td>
+</tr>
+<tr class="alt">
+<td>Baidu</td>
+<td>Li YanHong</td>
+<td>China</td>
+</tr>
+<tr>
+<td>Google</td>
+<td>Larry Page</td>
+<td>USA</td>
+</tr>
+<tr class="alt">
+<td>Lenovo</td>
+<td>Liu Chuanzhi</td>
+<td>China</td>
+</tr>
+<tr>
+<td>Microsoft</td>
+<td>Bill Gates</td>
+<td>USA</td>
+</tr>
+<tr class="alt">
+<td>Nokia</td>
+<td>Stephen Elop</td>
+<td>Finland</td>
+</tr>
+</table>
+</body>
+</html>

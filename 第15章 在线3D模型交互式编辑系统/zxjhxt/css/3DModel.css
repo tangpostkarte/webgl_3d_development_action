@@ -1,0 +1,110 @@
+@charset "utf-8";
+/*3d模型开始*/
+.fl{float:left;}
+.fr{float:right;}
+.clear{clear:both;}
+.wbb10293Dmodel-Left{width:26%;overflow:hidden;}
+.wbb3Dxitong{width:100%;height:70px;background:#347ca8;line-height:70px;text-align:center;}
+.wbb1029Userprofile{background:#202c30;width:100%;text-align:center;height:140px;color:#fff;line-height:140px;}
+.userprofileImg{display:inline-block;width:70px;height:70px;border-radius:50%;overflow:hidden;}
+.wbb1029xitongguanli{width:100%;height:500px;background:#2c3840;color:#fff;font-size:17px;}
+.wbb1029xitongguanli ul li{width:100%;height:60px;line-height:60px;text-indent:22%;}
+li.wbb1029libg1c282c{background:#1c282c;border-left:5px solid #2f607b;}
+
+
+.wbb10293Dmodel-right{width:74%;overflow:hidden;}
+.wbb10293Dmodel-right-top{background:#3c8cbc;width:100%;height:70px;}
+.wbb1029Welcomehome{width:100%;border-bottom:5px solid #202c30;}
+a.welcomehomeA{display:inline-block;color:#fff;font-size:17px;text-align:center;background:#202c30;width:135px;height:47px;line-height:47px;text-decoration:none;}
+.wbb1029Bge5e5e5{width:100%;background:#e5e5e5; padding:4%;}
+.wbb1029Bge5e5e5Ul li{width:44%;}
+.wbb10298474a4{line-height:50px;height:50px;font-size:20px;color:#fff;text-indent:20px;}
+.colorFff{font-size:20px;color:#fff;}
+.selectObj{
+    -moz-appearance: none;
+    -webkit-appearance:none;
+    appearance:none;
+	outline:none; 
+    border: 1px solid #cacaca;
+	background: #fff url(../images/wbb102904.png) no-repeat scroll center right;
+    height: 35px;
+	text-align:center;
+	font-size:17px;
+	border-radius:5px;
+	position:absolute;
+	width: 180px;
+    padding:0 3%;
+}
+.pass-portrait-openimg-1029-1{position:relative;}
+.pass-portrait-filebtn-1029-1{
+    border: medium none;
+    height: 35px;
+    text-align: center;
+    width: 160px;
+	color:#808080;
+	background:#fff;
+	border:1px solid #e6e6e6;
+	position:absolute;
+	left:0;
+	border-radius:5px;
+	font-size:17px;
+}
+.pass-portrait-file-1029-1{
+    height: 35px;
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    width: 160px;
+	border-radius:5px;
+}
+.wbb1029Determine{width:80px;height:30px;border:1px solid #e0dede;background:#e0dede;border-radius:3px;}
+.file-name-1025 {
+    color: #929090;
+    font-size: 13px;
+    padding:10px 0;
+    width: 100%;
+}
+.wbb1029Tabletr1{ border-bottom:2px solid #eae9e9;}
+.wbb1029Tabletr1 th{padding:15px 0;font-size:15px;color:#808080;}
+select{
+	-moz-appearance: none;
+    -webkit-appearance:none;
+    appearance:none;
+	outline:none; 
+    border: 1px solid #cacaca;
+	background: #fff url(../images/wbb102904.png) no-repeat scroll center right;
+    height: 25px;
+	text-align:center;
+	font-size:17px;
+	border-radius:5px;
+	width: 150px;
+    padding:0 4.5%;
+}
+.btn{
+	background: #e0dede none repeat scroll 0 0;
+    border: 1px solid #e0dede;
+    border-radius: 3px;
+    height: 30px;
+    width: 80px;
+}
+.btn:hover{
+	background: #3c8cbc none repeat scroll 0 0;
+    border: 1px solid #e0dede;
+    border-radius: 3px;
+    height: 30px;
+    width: 80px;
+	color:#fff;
+}
+td{
+	margin:0;
+	padding:5px 0;
+	text-align: center;
+	font-size:17px;
+}
+th{
+	width:150px;
+}
+/*3d模型结束*/
+/* CSS Document */
+

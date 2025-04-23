@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sampel1_19</title>
+</head><body>
+<script type="text/javascript">
+	document.writeln("输出一句话。");
+	document.writeln("输出另一句话。");
+	function myFun(){<!--定义一个函数，用于输出一句话。-->
+		document.writeln("调用方法输出一句话。");
+	};
+	myFun();
+	function mayFun1(name,weather){<!--定义一个带参数的函数。-->
+		document.writeln("Hello"+name+".");
+		document.writeln("It is"+weather+"today.");
+	};
+	myFun1("Tom","Sunny");
+	function myFun2(name){<!--定义一个带返回结果的函数。-->
+		return("Hello"+name+".");
+	}
+	document.writeln(myFun2("Tom"));
+</script>
+</body></html>

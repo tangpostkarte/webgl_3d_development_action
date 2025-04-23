@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Sample11_29</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<!--设置网页窗口的最小值-->
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #ffffff;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/FBXLoader.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats, controls;
+			var camera, scene, renderer;
+
+			//创建时间对象 根据时间来更新动画数组来绘制
+			var clock = new THREE.Clock();
+
+			//创建动画数组
+			var mixers = [];
+
+			function init() {
+			    //动态创建一个div层
+				container = document.createElement( 'div' );
+				//将div添加到
+				document.body.appendChild( container );
+				//创建摄像机
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+				//创建场景
+				scene = new THREE.Scene();
+				// grid 网格辅助工具
+				var gridHelper = new THREE.GridHelper( 30, 20);
+				//设置辅助网格的颜色
+				gridHelper.setColors( 0x303030, 0x303030 );
+				//设置网格位置
+				gridHelper.position.set( 0, - 0.04, 0 );
+				//将网格对象添加到场景中
+				scene.add( gridHelper );
+				// stats 界面监视辅助工具
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+				// model 创建模型加载器管理者
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function( item, loaded, total ) {
+					console.log( item, loaded, total );
+				};
+
+				var onProgress = function( xhr ) {
+					if ( xhr.lengthComputable ) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+					}
+				};
+
+				var onError = function( xhr ) {
+				};
+
+				//在加载模型时需要模型加载器 参数为模型加载器管理者
+				var loader = new THREE.FBXLoader( manager );
+				//加载模型
+				loader.load( 'models/fbx/xsi_man_skinning.fbx', function( object ) {
+				    //回调函数方法
+					object.traverse( function( child ) {
+
+					    //判断加载模型是否为mesh对象
+						if ( child instanceof THREE.Mesh ) {
+						}
+						//是否为蒙皮后的网格对象
+						if ( child instanceof THREE.SkinnedMesh )
+						{
+						    //当前对象含有动画
+							if ( child.geometry.animations !== undefined || child.geometry.morphAnimations !== undefined )
+							{
+							    //创建动画混合对象
+								child.mixer = new THREE.AnimationMixer( child );
+								//将动画添加到动画数组
+								mixers.push( child.mixer );
+								//获得动画
+								var action = child.mixer.clipAction( child.geometry.animations[ 0 ] );
+								//播放动画
+								action.play();
+							}
+						}
+					} );
+					//将场景中添加模型
+					scene.add( object );
+				}, onProgress, onError );
+
+				renderer = new THREE.WebGLRenderer();
+				//设置像素比
+				renderer.setPixelRatio( window.devicePixelRatio );
+				//设置渲染窗口大小
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				//设置背景颜色
+				renderer.setClearColor( 0xffffff );
+				//将渲染窗口添加进div标签中
+				container.appendChild( renderer.domElement );
+
+				// controls, camera
+				//设置鼠标监听
+				//默认情况下 左键旋转 右键移动 滚轮 缩放
+				controls = new THREE.OrbitControls(camera,renderer.domElement);
+
+
+				//设置鼠标滚轮缩放距离摄像机距离
+				controls.enabled = true;
+				controls.minDistance = 50;
+				controls.maxDistance=100;
+				//controls.rotateSpeed = 0.2;
+				controls.minAzimuthAngle=-1;
+				controls.maxAzimuthAngle = 1;
+				controls.minPolarAngle = -2;
+				controls.maxPolarAngle = 2;
+
+
+				//设置目标点
+				controls.target.set( 0, 12, 0 );
+				//设置摄像机位置
+				camera.position.set( 2, 18, 28 );
+				controls.update();
+
+				//设置窗口监听 场景随着窗口的大小缩放
+				window.addEventListener( 'resize', onWindowResize, false );
+                render();
+
+			}
+
+			function onWindowResize() {
+			    //设置摄像机的比例随着窗口大小改变
+				camera.aspect = window.innerWidth / window.innerHeight;
+				//更新摄像机状态
+				camera.updateProjectionMatrix();
+				//更新渲染窗口的大小
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function render() {
+                requestAnimationFrame( render );
+                //更新动画数组 随着时间一直更替动画
+                if ( mixers.length > 0 ) {
+                    for ( var i = 0; i < mixers.length; i ++ ) {
+                        mixers[ i ].update( clock.getDelta() );
+                    }
+                }
+                stats.update();
+				renderer.render( scene, camera );
+			}
+			window.onload = init();
+		</script>
+	</body>
+</html>

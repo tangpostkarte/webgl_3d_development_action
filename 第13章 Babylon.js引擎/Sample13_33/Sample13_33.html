@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Sample13_33</title>
+        <script src="build/cannon.js"></script>
+        <script src="build/babylon.custom.js"></script>
+        
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        function init(){
+            var canvas,engine,scene,camera,light;
+           
+            function createScene() 
+            {
+                //初始化引擎，场景，摄像机，光源
+                canvas = document.getElementById("renderCanvas");
+                engine = new BABYLON.Engine(canvas, true);
+                scene = new BABYLON.Scene(engine);
+                scene.enablePhysics();
+                //scene.defaultMaterial.wireframe = true;
+                //scene.defaultMaterial.wireframe
+                camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0,0,-40), scene);
+                //camera.position = new BABYLON.Vector3(0,-10,0);
+                camera.attachControl(canvas, true);
+                light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+                light.intensity = 0.7;
+                //声明 ground细分数
+                var subdivisions = 25;
+                //声明ground宽度
+                var groundWidth = 20;
+                //计算顶点之间的距离
+                var distanceBetweenPoints = groundWidth / subdivisions;	
+                //创建cloth材质
+                var clothMat = new BABYLON.StandardMaterial("texture3", scene);
+                clothMat.diffuseTexture = new BABYLON.Texture("textures/leaves.jpg", scene);
+                clothMat.backFaceCulling = false;
+                //创建clothmesh
+                var ground = BABYLON.Mesh.CreateGround("ground1", groundWidth, groundWidth, subdivisions-1, scene, true);
+                //ground.position.y = 10;
+                ground.material = clothMat;
+                //ground.material.wireframe =true;
+                //获取clothmesh的顶点数据 
+                var positions = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+                //声明球体数组
+                var spheres = [];
+                //根据顶点数据来创建球体
+                for (var i = 0; i < positions.length; i = i + 3) {
+                    var v = BABYLON.Vector3.FromArray(positions, i);
+                    
+                    var s = BABYLON.MeshBuilder.CreateSphere("s" + i, { diameter: 0.01 }, scene);
+                    s.position.copyFrom(v);
+                    //s.position.y = 10;
+                    spheres.push(s);
+                }
+                //创建距离关节
+                function createJoint(imp1, imp2) {
+                    var joint = new BABYLON.DistanceJoint({
+                        maxDistance: distanceBetweenPoints
+                    })
+                    imp1.addJoint(imp2, joint);
+                }
+                //遍历球体数组 为球体创建刚体
+                spheres.forEach(function (point, idx) {
+                    //设置小球质量
+                    var mass = idx < subdivisions ? 0 : 1;
+                    //创建小球刚体
+                    point.physicsImpostor = new BABYLON.PhysicsImpostor(point, BABYLON.PhysicsImpostor.ParticleImpostor, { mass: mass }, scene);
+                    //为小球创建距离关节
+                    if (idx >= subdivisions) {
+                        createJoint(point.physicsImpostor, spheres[idx - subdivisions].physicsImpostor);
+                        if (idx % subdivisions) {
+                            createJoint(point.physicsImpostor, spheres[idx - 1].physicsImpostor);
+                        }
+                    }
+                });
+                //在每次渲染之前  更新小球位置数据
+                ground.registerBeforeRender(function () {
+                    var positions = [];
+                    spheres.forEach(function (s) {
+                        positions.push(s.position.x, s.position.y, s.position.z);
+            
+                    });
+                    //更新小球位置
+                    ground.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
+                    ground.refreshBoundingInfo();
+                });                       
+            };
+            
+            createScene()
+            //创建循环渲染队列
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+            //设置窗口自适应
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

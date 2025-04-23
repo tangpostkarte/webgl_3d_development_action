@@ -1,0 +1,151 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>任意面剪裁</title>
+		<script type="text/javascript" src="js/util/Matrix.js"></script>
+		<script type="text/javascript" src="js/util/MatrixState.js"></script>	
+		<script type="text/javascript" src="js/util/GLUtil.js"></script>	
+		<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+		<script type="text/javascript" src="js/util/LoadObjUtil.js"></script>
+		<script type="text/javascript" src="js/util/ObjObject.js"></script>
+		<script type="text/javascript" src="js/util/LightManager.js"></script>
+		<script type="text/javascript" src="js/loadch.js"></script>
+		<script>
+			//GLES上下文
+			var gl;
+			//变换矩阵管理类对象
+			var ms=new MatrixState();
+			//要绘制的3D物体
+			var ooTri;
+			//着色器程序列表，集中管理
+			var shaderProgArray=new Array();
+			//光源位置管理器
+			var lightManager=new LightManager(40, 10, 20);
+			//纹理管理器
+			var texMap= new Array();
+			//绕y轴旋转角度
+			var currentYAngle=0;
+			//绕x轴旋转角度
+			var currentXAngle=0;
+			//旋转角度步长值
+			var incAngle=0.5;
+			//上次触控点X,Y坐标
+			var lastClickX,lastClickY;
+			var ismoved=false;//是否移动标志位
+			var countE=0,spanE=0.01;//剪裁面旋转
+			//鼠标按下的监听
+			document.onmousedown=function(event)
+			{
+				var x=event.clientX;
+				var y=event.clientY;
+				//如果鼠标在<canvas>内开始移动
+				var rect= (event.target||event.srcElement).getBoundingClientRect();
+				if(rect.left<=x&&x<rect.right&&rect.top<=y&&y<rect.bottom)
+				{
+					ismoved=true;
+					lastClickX=x;
+					lastClickY=y;
+				}
+			};
+			//鼠标抬起的监听
+			document.onmouseup=function(event){ismoved=false;};
+			//鼠标移动时的监听
+			document.onmousemove = function(event)
+			{
+				var x=event.clientX,y=event.clientY;
+				if(ismoved)
+				{
+					currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+				}
+				lastClickX=x;
+				lastClickY=y;
+			};
+			//初始化的方法
+			function start()
+			{
+                //获取3D Canvas
+                var canvas = document.getElementById('bncanvas');
+                //获取GL上下文
+                gl = canvas.getContext('webgl2',{stencil: true ,antialias: true});
+                if (!gl) //若获取GL上下文失败
+                {
+                    alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                    return;
+                }
+
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(0.0,0.0,0.0,1.0);  
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        //设置摄像机
+			ms.setCamera(0,0,0,0,0,-1,0,1,0);
+			//设置光源位置
+			lightManager.setLightLocation(40, 10, 20);
+	        //设置投影参数
+	        ms.setProjectOrtho(-1.5,1.5,-1,1,1,300);//setProjectOrtho
+	        //gl.enable(gl.DEPTH_TEST);//开启深度检测
+			//打开深度检测
+            gl.enable(gl.DEPTH_TEST);
+            //打开背面剪裁   
+            gl.enable(gl.CULL_FACE);
+
+                //加载着色器程序
+                loadShaderFile("shader/vertex.bns",0);//带光照的物体
+                loadShaderFile("shader/fragment.bns",0);//带光照的物体
+			//着色器加载完了加载绘制者
+			loadchObjFile("obj/ch_t.obj"); 
+			//加载茶壶纹理图
+	        loadImageTexture(gl, "pic/ghxp.png","ghxp");
+			setInterval("drawFrame();",30);//定时调用drawFrame（）方法，每隔30s就调用一次
+			}
+			function drawFrame()
+			{
+				 if(!ooTri)
+			{
+				console.log("加载未完成！");//提示信息
+				return;
+			}
+			
+			if (countE >= 2) {
+				spanE = -0.01;
+			} else if (countE <= 0) {
+				spanE = 0.01;
+			}
+			countE = countE + spanE;
+			var e=[1.0, countE - 1.0, -countE + 1.0, 0.0];//定义剪裁平面
+			
+			//设置屏幕背景色RGBA
+	        gl.clearColor(0.0,0.0,0.0,1.0);  
+	        //清除着色缓冲与深度缓冲
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+			//设置投影参数
+	        ms.setProjectOrtho(-1.5,1.5,-1,1,1,300);
+			//设置摄像机
+			ms.setCamera(0,0,0,0,0,-1,0,1,0);
+	        //保护现场
+	        ms.pushMatrix(); 
+	        //执行平移
+	        ms.translate(0,-0.4,-25);
+			ms.scale(0.025,0.025,0.025);
+	        //执行绕Y轴旋转
+			ms.rotate(currentYAngle,0,1,0);
+			//执行绕X轴旋转
+			ms.rotate(currentXAngle,1,0,0);
+			//绘制物体
+			ooTri.drawSelf(ms,texMap["ghxp"],e);
+			
+			//恢复现场
+			ms.popMatrix();
+			}
+		</script>
+	</head>
+	
+	<body onload="start();">
+		<canvas height="1080" width="1920" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+		</canvas>
+	</body>
+</html>

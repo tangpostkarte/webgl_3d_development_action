@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon.js SampleX_1</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <style>
+
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+
+    </style>
+    <script>
+
+        window.addEventListener('DOMContentLoaded', function(){
+
+            //获取Canvas Dom对象
+            var canvas = document.getElementById('renderCanvas');
+
+            // 加载3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+            //创建场景
+            var createScene= function  () {
+
+                //创建场景
+                var scene = new BABYLON.Scene(engine);
+
+
+                //创建灯光
+                var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 100, 0), scene);
+                //灯光强度
+                light.intensity=1;
+
+
+                //创建摄像机
+                var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, new BABYLON.Vector3.Zero(), scene);
+                //添加摄像机控制
+                camera.attachControl(canvas, true);
+
+                //创建资源管理
+                var loader = new BABYLON.AssetsManager(scene);
+
+                //加载任务成功方法
+                var pos = function (task) {
+                    task.loadedMeshes.forEach(function (mesh) {
+                        mesh.material=new BABYLON.StandardMaterial("meshMaterial", scene);
+                        mesh.material.diffuseTexture=new BABYLON.Texture("textures/konglong.jpg", scene);
+                        mesh.material.bumpTexture=new BABYLON.Texture("textures/konglongn.jpg", scene);
+                    });
+                };
+
+                //创建加载任务
+                var  meshTask = loader.addMeshTask("", "","model/", "konglong.obj");
+                //meshTask任务完成回调
+                meshTask.onSuccess = pos;
+
+
+                //所有任务有一个出错便会触发
+                loader.onTaskError = function (task) {
+                    console.log('Error with loading by assetsManager...');
+                };
+                //所有任务加载完成
+                loader.onFinish = function (task) {
+                    console.log('successful with loading by assetsManager...');
+                };
+                //开始所有任务
+                loader.load();
+
+                scene.registerBeforeRender(function () {
+                    light.position=camera.position
+                });
+
+                return scene;
+            }
+            //新建场景
+            var scene = createScene();
+
+            //启动渲染循环
+            engine.runRenderLoop(function(){
+                scene.render();
+            });
+
+            //窗口变化监听
+            window.addEventListener('resize', function(){
+                engine.resize();
+            });
+
+        });
+    </script>
+</head>
+<body >
+<canvas id="renderCanvas"></canvas>
+</body>
+</html>

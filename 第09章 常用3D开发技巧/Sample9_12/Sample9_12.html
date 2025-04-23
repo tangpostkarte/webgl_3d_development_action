@@ -1,0 +1,139 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Spinning WebGL Box</title>
+  <!--库js的引入-->  
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>	
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/LightManager.js"></script>
+	<script type="text/javascript" src="js/util/LoadObjUtil.js"></script>
+	<script type="text/javascript" src="js/util/ObjObject.js"></script>
+		<script type="text/javascript" src="js/util/loadObject.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+		<script type="text/javascript" src="js/util/mouseListener.js"></script>
+	<!--应用特有js的引入-->
+	<script type="text/javascript" src="js/GlobalVar.js"></script>
+	<script>
+        'use strict';
+        mouseListener();
+
+        var canvas;
+	    //初始化的方法
+	    function start()
+	    {
+            //获取3D Canvas
+            canvas = document.getElementById('bncanvas');
+            //获取GL上下文
+            gl = canvas.getContext('webgl2', { antialias: true });
+            if (!gl) //若获取GL上下文失败
+            {
+                alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                return;
+            }
+
+
+            //加载着色器程序
+            loadShaderFile("shader/vertex.bns",0,0);//带光照的物体
+            loadShaderFile("shader/fragment.bns",0,1);//带光照的物体
+
+
+
+            //加载着色器程序
+            loadShaderFile("shader/vertexEdge.bns",1,0);//带光照的物体
+            loadShaderFile("shader/fragmentEdge.bns",1,1);//带光照的物体
+
+
+
+            loadObjFile("obj/ch.obj",0,0);
+            loadObjFile("obj/qt.obj",1,0);
+            loadObjFile("obj/ch.obj",2,1);
+            loadObjFile("obj/qt.obj",3,1);
+
+	        //绘制画面
+	        setInterval("drawFrame();",30);
+	    }
+	    
+	    //绘制一帧画面的方法
+	    function drawFrame()
+	    {
+	        //若还没有加载完则不绘制
+            if((!masss)||(!masss1)||(!masss2)||(!masss3))
+			{return;}
+            //设置视口
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            //设置屏幕背景色RGBA
+            gl.clearColor(0.0,0.0,0.0,1.0);
+            //初始化变换矩阵
+            ms.setInitStack();
+            //设置摄像机
+            ms.setCamera(0,50,50,0,0,0,0,1,0);
+            //设置投影
+            ms.setProjectFrustum(-1.5,1.5,-1,1,2,200);
+	        //清除着色缓冲与深度缓冲
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			ms.pushMatrix();
+            ms.pushMatrix();
+            ms.translate(15,0,-25);
+            gl.enable(gl.CULL_FACE);								//开启剪裁
+            gl.cullFace(gl.BACK);									//剪裁背面
+            gl.frontFace(gl.CW);									//绘制顺序为顺时针
+            masss2.drawSelf(ms);//绘制描边物体
+            gl.frontFace(gl.CCW);									//绘制顺序为逆时针
+            masss.drawSelf(ms);//绘制原物体
+			ms.popMatrix();
+            ms.pushMatrix();
+            ms.translate(15,0,5);
+            gl.enable(gl.CULL_FACE);								//开启剪裁
+            gl.cullFace(gl.BACK);									//剪裁背面
+            gl.frontFace(gl.CW);									//绘制顺序为顺时针
+            masss2.drawSelf(ms);//绘制描边物体
+            gl.frontFace(gl.CCW);									//绘制顺序为逆时针
+            masss.drawSelf(ms);//绘制原物体
+            ms.popMatrix();
+
+//            ms.pushMatrix();
+//            gl.enable(gl.DEPTH_TEST);//开启深度检
+//            //保护现场
+//            ms.translate(15,0,-25);
+//            masss2.drawSelf(ms);//绘制描边物体
+//            gl.disable(gl.DEPTH_TEST);//开启深度检
+//            masss.drawSelf(ms);//绘制原物体
+//            ms.popMatrix();
+//            ms.pushMatrix();
+//            gl.enable(gl.DEPTH_TEST);//开启深度检
+//            //保护现场
+//            ms.translate(15,0,5);
+//            masss2.drawSelf(ms);//绘制描边物体
+//            gl.disable(gl.DEPTH_TEST);//开启深度检
+//            masss.drawSelf(ms);//绘制原物体
+//            ms.popMatrix();
+            ms.pushMatrix();
+            gl.enable(gl.DEPTH_TEST);//开启深度检
+            //保护现场
+            ms.translate(-15,0,8);
+            masss3.drawSelf(ms);//绘制描边物体
+            gl.disable(gl.DEPTH_TEST);//开启深度检
+            masss1.drawSelf(ms);//绘制原物体
+            ms.popMatrix();
+            ms.pushMatrix();
+            gl.enable(gl.DEPTH_TEST);//开启深度检
+            //保护现场
+            ms.translate(-15,3,-2);
+            masss3.drawSelf(ms);//绘制描边物体
+            gl.disable(gl.DEPTH_TEST);//开启深度检
+            masss1.drawSelf(ms);//绘制原物体
+            ms.popMatrix();
+            ms.popMatrix();
+
+        }
+	</script>
+</head>
+
+<body onload="start();">
+	<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+	</canvas>
+</body>
+</html>

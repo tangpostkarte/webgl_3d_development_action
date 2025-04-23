@@ -1,0 +1,12 @@
+<!DOCTYPE HTML>
+<html><head><title>Example</title></head>
+<body><script type="text/javascript">
+	var mydata={
+		name:"Tom",
+		weather:"Sunny",
+		printMessages:function(){
+		document.writeln("Hello"+mydata.name+".");
+		document.writeln("Today is "+ mydata.weather+".");}};
+	for(var prop in mydata){
+		document.writeln("Name" + prop + "Value:" + mydata[prop]);}
+</script></body></html>

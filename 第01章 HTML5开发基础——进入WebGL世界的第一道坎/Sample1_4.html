@@ -1,0 +1,38 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Sample1_4</title></head>
+<body>
+<p>这里为删除线标签示例 一打有 <del>二十</del> <ins>十二</ins> 件。</p>
+<!--大多数浏览器会改写为删除文本和下划线文本，一些老式的浏览器会把删除文本和下划线文本显示为普通文本。-->
+<p>这里为标记标签示例：出门记着带 <mark>钥匙</mark></p><!--此标签为HTML5新加的标签-->
+<p>这里为时间标签示例：我在 <time datetime="2016-10-01">国庆节</time> 会放假。</p>
+<!--本标签定义公历的时间（24 小时制）或日期，时间和时区偏移是可选的。-->
+
+<p>从现在开始我们就要进入表单类标签的学习，在这里我们将学到日常生活中在网页世界中经常见到与用到的东西。<br/>
+我们首先将要学习的是form标签，下面将是form标签示例：</p>
+<form action="/example/html/form_action.asp" method="get">
+  <p>姓氏: <input type="text" name="姓氏" /></p>
+  <p>名字: <input type="text" name="名字" /></p>
+  <input type="submit" value="Submit" />
+</form><!--由于本部分点击提交涉及到服务器方面的知识，但是这里只是在介绍关于HTML的基础内容所以便不叙述服务器方面知识，
+想了解此方面内容的读者应当找一些专业讲解此方面内容的书籍资料。-->
+<p>以上程序示例了一个基本的form标签如何使用，接下来我们分步来看一下文本域、密码域、复选框、单选按钮。</p>
+<form><p>现在为文本域的创建示例：</p>
+名：<input type="text" name="名"><br />
+姓：<input type="text" name="姓">
+</form><!--同上面程序一样，input标签的type属性为text时即为文本域-->
+<form><p>现在我们来看密码域的创建过程，在输入密码时浏览器会用其他符号代替密码</p>
+用户：<input type="text" name="用户"><br />
+密码：<input type="password" name="密码">
+</form><!--与文本域类似，将input标签的type属性改为password即为建立了一个密码域-->
+<form><p>现在我们来看复选框的创建过程</p>
+我喜欢步行：<input type="checkbox" name="步行"><br />
+我喜欢汽车：<input type="checkbox" name="汽车">
+</form><!--在input标签的type属性中改为checkbox即为复选框的创建-->
+<form><p>现在我们来学习单选按钮的创建过程</p>
+男性：<input type="radio" checked="checked" name="Sex" value="male" /><br />
+女性：<input type="radio" name="Sex" value="female" />
+</form><!--当用户点击一个单选按钮时，该按钮会变为选中状态，其他所有按钮会变为非选中状态-->
+</body>
+</html>

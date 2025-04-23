@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_7</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+		renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+		var planeGeometry = new THREE.PlaneGeometry(60, 20);//新建长方形平面
+        var planeMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});//新建平面使用的材质
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);//新建网格对象
+        plane.rotation.x = -0.5 * Math.PI;//设置平面的旋转角度
+        plane.position.x = -10;//设置长方形平面的位置
+        plane.position.y = -5;
+        plane.position.z = -2;
+        scene.add(plane);//将长方形平面添加到场景中
+        camera.position.x = 30;//设置摄像机位置
+        camera.position.y = 30;
+        camera.position.z = 30;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		var radius = 50;//点光源的圆形轨道半径
+		var pointLightAngle = 0;//点光源旋转的角度
+		
+		
+		function addGeometry(){//添加几何对象的方法
+			var geometryArray=[];//存储几何对象的数组
+			geometryArray.push(new THREE.BoxGeometry(4, 4, 4));//新建正方体
+			geometryArray.push(new THREE.CylinderGeometry(1, 4, 4));//新建圆台
+			geometryArray.push(new THREE.SphereGeometry(2));//新建球体
+			geometryArray.push(new THREE.IcosahedronGeometry(4));//新建正二十面体
+            geometryArray.push(new THREE.OctahedronGeometry(3));//新建正八面体
+            geometryArray.push(new THREE.TetrahedronGeometry(3));//新建正四面体
+            geometryArray.push(new THREE.TorusGeometry(3, 1, 10, 10));//新建圆环
+            geometryArray.push(new THREE.TorusKnotGeometry(3, 0.5, 50, 20));//新建圆环结
+			geometryArray.push(new THREE.PlaneGeometry(4,2));//新建长方形平面
+			geometryArray.push(new THREE.CircleGeometry(4,18));//新建圆面
+			var material=new THREE.MeshPhongMaterial({color: 0xff0000});
+			for(var i=0;i<geometryArray.length;i++){//遍历所有几何对象
+				var mesh=new THREE.Mesh(geometryArray[i], material);//创建网格对象
+				mesh.position.x=-24+Math.floor(i/2)*10;//确定网格对象的位置
+				mesh.position.y=0;
+				mesh.position.z=(i%2==0)?-4:4;
+				scene.add(mesh);//将网格对象添加到场景中
+			}
+		}
+		addGeometry();//添加几何对象
+		function addLightAndGUI(){
+			var ambiColor = "#42545e";
+			var ambientLight = new THREE.AmbientLight(ambiColor);
+			scene.add(ambientLight);
+			
+			var pointColor = "#828982";//点光源的颜色值
+			pointLight = new THREE.PointLight(pointColor);//创建点光源
+			pointLight.position.x =0;	//设置点光源的x坐标
+			pointLight.position.y =30;	//设置点光源的y坐标
+			pointLight.position.z =0;	//设置点光源的z坐标
+			scene.add(pointLight);//将点光源添加到场景中
+			var controls = new function () {
+			this.ambiColor = ambiColor;
+            this.pointColor = pointColor;
+            this.intensity = 1;
+            this.distance = 100;
+			this.closePointLight = false;
+			this.closeAmbientLight= false;
+			};
+			var gui = new dat.GUI();
+			gui.addColor(controls, 'pointColor',"点光源颜色").onChange(function (e) {
+				pointLight.color = new THREE.Color(e);
+			});
+			gui.add(controls, 'intensity', 0, 3,"点光源光线强度").onChange(function (e) {
+				pointLight.intensity = e;
+			});
+			gui.add(controls, 'distance', 0, 200,"点光源照射的最大距离").onChange(function (e) {
+				pointLight.distance = e;
+			});
+			gui.add(controls, 'closePointLight',"是否关闭点光源").onChange(function (e) {
+				pointLight.visible = !e;
+			});
+			gui.addColor(controls, 'ambiColor',"环境光颜色").onChange(function (e) {
+				ambientLight.color = new THREE.Color(e);
+			});
+			gui.add(controls, 'closeAmbientLight',"是否关闭环境光").onChange(function (e) {
+				ambientLight.visible=!e;
+			});
+		}
+		addLightAndGUI();
+		
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();//渲染画面
+		function renderScene() {
+			pointLightAngle+=1;
+			pointLight.position.x =radius*Math.sin(pointLightAngle/180*Math.PI);
+			pointLight.position.z =radius*Math.cos(pointLightAngle/180*Math.PI);
+            requestAnimationFrame(renderScene);//请求绘制下一帧
+            renderer.render(scene, camera);//渲染当前画面
+        }}
+		window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

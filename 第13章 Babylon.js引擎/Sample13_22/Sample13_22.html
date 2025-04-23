@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>精灵及精灵动画</title>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            //从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            //加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+
+            var createScene = function() {
+                var scene = new BABYLON.Scene(engine); // 创建场景
+
+                // 创建相机和灯光
+                // var light = new BABYLON.PointLight("Point", new BABYLON.Vector3(5, 10, 5), scene);
+                // light.diffuse = new BABYLON.Color3(1, Math.random(), Math.random());
+                // light.intensity = 91;
+                var light = new BABYLON.PointLight("light", new BABYLON.Vector3(-20, 20, 20), scene);
+                light.diffuse = new BABYLON.Color3(1, Math.random(), Math.random());
+                light.range = 100; //设置光源的照射范围
+                light.intensity = 1.1; //设置光源的强度
+
+                var camera = new BABYLON.ArcRotateCamera("Camera", 1, 0.8, 8, new BABYLON.Vector3(0, 0, 0), scene);
+                camera.attachControl(canvas, true);
+
+                // 创建精灵管理器优化GPU资源
+                // 参数：名称、图片URI、容量、精灵大小、场景
+                var spriteManagerTrees = new BABYLON.SpriteManager("treesManager", "pic/paln1.png", 800, 900, scene);
+
+                //我们在任意位置创建2000棵树
+                for (var i = 0; i < 2000; i++) {
+                    var tree = new BABYLON.Sprite("tree", spriteManagerTrees);
+                    tree.position.x = Math.random() * 100 - 50;
+                    tree.position.z = Math.random() * 100 - 50;
+                    tree.isPickable = true; //光线可吸收
+
+                    //一些倒下死亡的树
+                    if (Math.round(Math.random() * 5) === 0) {
+                        tree.angle = Math.PI * 90 / 180;
+                        tree.position.y = -0.3;
+                    }
+                }
+
+                //为玩家的精灵动画创建一个管理器 
+                var spriteManagerPlayer = new BABYLON.SpriteManager("playerManager", "pic/player.png", 2, 64, scene);
+
+                // 第一个人物角色动画播放器
+                var player = new BABYLON.Sprite("player", spriteManagerPlayer);
+                //从第0帧到第43帧进行动画处理。第三个参数指示此动画是否循环。最后一个参数是帧之间的延迟（它越小，动画越快）。
+                player.playAnimation(0, 40, true, 100); //播放动画
+                player.position.y = -0.3;
+                player.size = 0.3;
+                player.isPickable = true; //光线可吸收
+
+                // 第二个人物角色动画播放器
+                var player2 = new BABYLON.Sprite("player2", spriteManagerPlayer);
+                player2.stopAnimation(); // 停止播放动画
+                player2.cellIndex = 3; // 人物显示特定的帧图像索引，例如第4副图像
+                player2.position.y = -0.3;
+                player2.position.x = 1;
+                player2.size = 0.3;
+                player2.invertU = -1; //人物变化方向
+                player2.isPickable = true;
+
+
+                // Picking
+                spriteManagerTrees.isPickable = true;
+                spriteManagerPlayer.isPickable = true;
+
+                scene.onPointerDown = function(evt) {
+                    var pickResult = scene.pickSprite(this.pointerX, this.pointerY);
+                    if (pickResult.hit) {
+                        pickResult.pickedSprite.angle += 0.5;
+                    }
+                };
+
+
+                return scene;
+            }
+
+            var scene = createScene();
+            //新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                scene.render();
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

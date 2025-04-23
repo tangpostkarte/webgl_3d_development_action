@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>粒子</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            // 从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            // 加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+            var time = 0;
+
+            var particleSystem;
+
+            var createScene = function() {
+                var scene = new BABYLON.Scene(engine); //创建场景
+
+                // 设置环境
+                var light0 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 2, 8), scene); //创建点光源
+                var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 0.8, 20, new BABYLON.Vector3(0, 0, 0), scene); //创建摄像机
+                camera.attachControl(canvas, true); // 相机监听
+
+                // 创建盒子正方体
+                var fountain = BABYLON.Mesh.CreateBox("foutain", 1.0, scene);
+
+                // 创建平面
+                var ground = BABYLON.Mesh.CreatePlane("ground", 50.0, scene);
+                ground.position = new BABYLON.Vector3(0, -10, 0);
+                ground.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
+
+                ground.material = new BABYLON.StandardMaterial("groundMat", scene); //创建平面标准材质
+                ground.material.backFaceCulling = false; //设置背面剔除状态
+                ground.material.diffuseColor = new BABYLON.Color3(0.3, 0.3, 1); //漫反射颜色
+
+                // 创建粒子系统，名称、容量、场景
+                particleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
+
+                // 每个粒子的纹理
+                particleSystem.particleTexture = new BABYLON.Texture("pic/flare.png", scene);
+
+                // 使用蒙版应用于纹理以过滤某些颜色，或过滤Alpha通道的一部分。
+                // particleSystem.textureMask = new BABYLON.Color4(0.1, 0.8, 0.8, 1.0);
+
+                // 粒子来源处
+                particleSystem.emitter = fountain; // 粒子系统发射器为盒子。代表附着粒子系统的网格或位置。 
+
+                // 粒子系统发射器可以使用矢量3或网格定位
+                // particleSystem.emitter = new BABYLON.Vector3(-1, 2, 3);
+
+                // 来自发射器的粒子的扩散来自盒子内，盒子的大小通过相对于发射器的位置设置盒子的下，左，
+                // 前角和上，右，后角来确定。这是使用minEmitBox和完成的maxEmitBox
+                particleSystem.minEmitBox = new BABYLON.Vector3(-1, 0, 0); // 将粒子发射器发射盒子压缩到x轴
+                particleSystem.maxEmitBox = new BABYLON.Vector3(1, 0, 0); // To...
+
+                // 所有粒子的颜色，随机在color1和color2之间
+                particleSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
+                particleSystem.color2 = new BABYLON.Color4(0.2, 0.5, 1.0, 1.0);
+                particleSystem.colorDead = new BABYLON.Color4(0, 0, 0.2, 0.0); //粒子消失颜色
+
+                // 每个粒子的大小（随机在最小和最大之间） 
+                particleSystem.minSize = 0.1;
+                particleSystem.maxSize = 0.5;
+
+                // 将粒径更改为不是正方形，则可以使用ScaleX / Y的最小值/最大值：
+                // particleSystem.minScaleX = 0.8;
+                // particleSystem.maxScaleX = 0.6;
+                // particleSystem.minScaleY = 0.9;
+                // particleSystem.maxScaleY = 0.7;
+
+                //3.3特性 定义大小因子渐变。
+                //第一个参数定义了梯度（0表示粒子出生，1表示粒子死亡）。第二个参数是应用于粒子初始大小
+                //的因子。在这种情况下，粒子将以初始大小的一半（从minScale和maxScale计算）出生。建议至少为0和1定义一个渐变
+                // particleSystem.addSizeGradient(0, 0.5);
+                // particleSystem.addSizeGradient(1.0, 3);
+                // particleSystem.addSizeGradient(0, 0.5, 0.8);
+                // particleSystem.addSizeGradient(1.0, 3, 4);
+                // particleSystem.removeSizeGradient(0.5)。 //删除渐变
+
+                // 每个粒子的生命时间（随机在……之间） 
+                particleSystem.minLifeTime = 0.3;
+                particleSystem.maxLifeTime = 1.5;
+
+                // babylon3.3特性 使用如下渐变定义粒子生命周期：
+                // particleSystem.addLifeTimeGradient(0, 0.5);
+                // particleSystem.addLifeTimeGradient(1, 0);
+                // particleSystem.addLifeTimeGradient(0, 0.5, 0.8);
+                // particleSystem.addLifeTimeGradient(1.0, 0, 0.1);
+                // particleSystem.removeLifeTimeGradient(0.5)。//删除渐变
+
+                // 每帧最大发射粒子数
+                particleSystem.emitRate = 1500;
+
+                // 混合模式：BuldMeDeOne One，或BrutMod标准 
+                particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+
+                // 给所有粒子设置重力。y方向重力加速度值为-9.81
+                particleSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
+
+                // 每个粒子发射后的方向 ,随机在方向1矢量和方向2矢量之间
+                particleSystem.direction1 = new BABYLON.Vector3(-7, 8, 3);
+                particleSystem.direction2 = new BABYLON.Vector3(7, 8, -3);
+
+                // 角速度。（弧度值）
+                particleSystem.minAngularSpeed = 0;
+                particleSystem.maxAngularSpeed = Math.PI;
+
+                // 粒子系统发射功率，即发射速度
+                particleSystem.minEmitPower = 1;
+                particleSystem.maxEmitPower = 3;
+
+                // 整体运动速度（0.01是默认更新速度，更快的更新=更快的动画） 
+                particleSystem.updateSpeed = 0.005;
+
+                // 3.3特性 指定预热期，以确保在渲染之前系统处于正确状态。
+                // 获取或设置一个值，指示在首次渲染之前必须执行多少个循环（或帧）（必须在启动系统之前设置此值）。默认值为0（即没有预热）
+                particleSystem.preWarmCycles = 100;
+                // 获取或设置一个值，指示在预热模式下使用的时间步长乘数（默认值为1）
+                particleSystem.preWarmStepOffset = 5;
+                // 启动粒子系统
+                particleSystem.start();
+
+                // 粒子系统运行的时间
+                // particleSystem.targetStopDuration = 0.5;
+
+                // 喷泉动画，盒子循环转动动画
+                var keys = [];
+                // 参数：名称，目标属性，动画每秒帧数，动画类型，动画循环模式，是否混合
+                var animation = new BABYLON.Animation("animation", "rotation.x", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+                    BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                // 在动画第0帧，盒子旋转角度为0
+                keys.push({
+                    frame: 0,
+                    value: 0
+                });
+
+                // 在动画第50帧，盒子旋转角度达到180度。 
+                keys.push({
+                    frame: 50,
+                    value: Math.PI
+                });
+
+                // 在动画第100帧，盒子旋转角度回到0。 
+                keys.push({
+                    frame: 100,
+                    value: 0
+                });
+
+                // 启动动画
+                animation.setKeys(keys);
+                // 发射器盒子添加动画
+                fountain.animations.push(animation);
+                // 启动场景动画，参数：目标物体、动画播放初始帧、动画播放结束帧、是否循环、运行动画速度（默认1）、动画结束时要执行的函数 
+                scene.beginAnimation(fountain, 0, 100, true);
+
+                return scene;
+            }
+
+            var scene = createScene();
+            //新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                time = time + 1;
+                // particleSystem.disposeOnStop = true;
+                // if (time == 50) {
+                //     particleSystem.stop();
+                //     particleSystem.reset();
+                //     particleSystem.disposeOnStop = true;
+                // }
+                scene.render();
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

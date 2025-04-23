@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+   version="2.5">
+
+  <display-name>Welcome to Tomcat</display-name>
+  <description>
+     Welcome to Tomcat
+  </description>
+  
+  <servlet>
+        <servlet-name>servletUpload</servlet-name>
+        <servlet-class>com.bn.zxjhxt.servletUpload</servlet-class>
+  </servlet>
+  <servlet-mapping>
+       <servlet-name>servletUpload</servlet-name>       
+       <url-pattern>/servletUpload</url-pattern>
+  </servlet-mapping>   
+
+</web-app>

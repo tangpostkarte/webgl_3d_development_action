@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js BOX_UV贴图</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script>
+
+    var canvas = document.getElementById("renderCanvas");
+    var engine = new BABYLON.Engine(canvas, true);
+
+    var createScene = function () {
+
+        //创建场景
+        var scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color3(.5, .5, .5);
+
+        // 创建跟随摄像机
+        var camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 0, new BABYLON.Vector3(0, 0, -0), scene);
+        camera.setPosition(new BABYLON.Vector3(0, 0, -20));
+        camera.attachControl(canvas, true);
+
+        //创建半球光源
+        var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+        light.intensity = 0.7;
+
+        //创建点光源
+        var pl = new BABYLON.PointLight("pl", BABYLON.Vector3.Zero(), scene);
+        pl.intensity = 0.5;
+
+        //创建材质
+        var mat = new BABYLON.StandardMaterial("mat", scene);
+        var texture = new BABYLON.Texture("textures/box.jpg", scene);
+        mat.diffuseTexture = texture;
+
+        //指定行列
+        var columns = 6;  // 6 columns
+        var rows = 4;  // 4 rows
+
+        var faceUV = new Array(6);
+
+        //计算纹理坐标
+        for (var i = 0; i < 6; i++) {
+            faceUV[i] = new BABYLON.Vector4(i / columns, 0, (i + 1) / columns, 1 / rows);
+        }
+
+        //立方体网格对象参数
+        var options = {
+            width: 5,
+            height: 5,
+            depth: 5,
+        };
+
+        //创建立方体网格对象
+        var box = BABYLON.MeshBuilder.CreateBox('box', options, scene);
+        box.material = mat;
+
+        //渲染之前
+        scene.registerBeforeRender(function () {
+            //更改光源的位置
+            pl.position = camera.position;
+        });
+
+        return scene;
+    };
+
+
+    var scene = createScene()
+
+    engine.runRenderLoop(function () {
+        if (scene) {
+            scene.render();
+        }
+    });
+
+    //窗口变化监听
+    window.addEventListener("resize", function () {
+        engine.resize();
+    });
+</script>
+</body>
+</html>

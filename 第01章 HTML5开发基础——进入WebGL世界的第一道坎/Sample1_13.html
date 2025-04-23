@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ <title>Sample1_13</title></head>
+<style type="text/css">
+#div1 {width:350px;height:70px;padding:10px;border:1px solid #aaaaaa;}
+</style>
+<script type="text/javascript">
+function allowDrop(ev)
+{
+ev.preventDefault();
+}
+function drag(ev)
+{
+ev.dataTransfer.setData("Text",ev.target.id);
+}
+function drop(ev)
+{
+var data=ev.dataTransfer.getData("Text");
+ev.target.appendChild(document.getElementById(data));
+ev.preventDefault();
+}
+</script>
+<body>
+ <p>现在我们来演示规定元素是否可拖动的属性draggable，下面一段文本可以被拖动到文本域中：</p>
+<div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"></div><br />
+<p id="drag1" draggable="true" ondragstart="drag(event)">这是一段可移动的段落。请把该段落拖入上面的矩形。</p>
+<!--在head部分我们定义了div的样式，在这里不做解释在下一节中我们会有专门的层叠样式表的讲述。
+ondrop、ondragover、ondragstart为标签中的事件属性分别表示元素被拖动时运行的脚本、当元素在
+有效拖放目标上正在被拖动时运行的脚本、在拖动操作开端运行的脚本。这些事件属性是表示当触发
+这些事件时，会调用相应的JavaScript脚本方法，这些方法在head部分中已经写好。-->
+<p>现在我们来看一下style属性的应用：</p>
+<h1 style="color:blue;text-align:center">这里为h1标题</h1>
+<p style="color:red">这里为一个段落。</p>
+<!--style 属性规定元素的行内样式（inline style）style 属性将覆盖任何全局的样式设定，-->
+<p>tabindex 属性规定元素的TAB键控制次序，1是第一个。</p>
+<a href="http://www.baidu.com" tabindex="2">Baidu</a><br />
+<a href="http://www.sina.com" tabindex="1">Sina</a><br />
+<a href="http://www.w3school.com.cn/" tabindex="3">W3school</a>
+<!--请尝试使用键盘上的 "Tab" 键在链接之间进行导航。-->
+<p>下面我们将演示title属性的使用，title 属性规定关于元素的额外信息。</p>
+<abbr title="People's Republic of China">PRC</abbr> was founded in 1949.
+<!--这些信息通常会在鼠标移到元素上时显示一段工具提示文本,title 属性常与 form 
+以及 a 元素一同使用，以提供关于输入格式和链接目标的信息。同时它也是 abbr 和 
+acronym 元素的必需属性。-->
+<p contenteditable="true" spellcheck="true">这里是可编辑的段落，请试着编辑文本。</p>
+<!--spellcheck 属性规定是否对元素进行拼写和语法检查。-->
+</body>
+</html>

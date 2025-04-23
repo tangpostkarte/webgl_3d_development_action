@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<head>
+    <title>纹理混合</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <script type="text/javascript" src="util/DecalGeometry.js"></script>
+    <script type="text/javascript" src="util/OBJLoader.js"></script>
+    <script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+
+    var pm;         //平面变量
+    var cft;        //长方体变量
+    var ch;         //茶壶变量
+    var qt;         //球体变量
+    var yh;         //圆环变量
+    var scene;      //场景变量
+    var renderer;   //新建渲染器变量
+    var camera;     //摄像机变量
+    var mesh;       //模型
+    var material;   //透镜的材质
+
+    //混合方程
+    var blendEquation=["AddEquation","SubtractEquation",
+        "ReverseSubtractEquation","MinEquation","MaxEquation"];
+    //源因子
+    var src = [ "ZeroFactor", "OneFactor", "SrcColorFactor",
+        "OneMinusSrcColorFactor", "SrcAlphaFactor", "OneMinusSrcAlphaFactor", "DstAlphaFactor",
+        "OneMinusDstAlphaFactor", "DstColorFactor", "OneMinusDstColorFactor", "SrcAlphaSaturateFactor" ];
+    //目标因子
+    var dst = [ "ZeroFactor", "OneFactor", "SrcColorFactor",
+        "OneMinusSrcColorFactor", "SrcAlphaFactor", "OneMinusSrcAlphaFactor",
+        "DstAlphaFactor", "OneMinusDstAlphaFactor", "DstColorFactor", "OneMinusDstColorFactor" ];
+    //混合方式
+    var blending = "CustomBlending";
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+
+        //初始化场
+        initScene();
+        //添加物体
+        addMesh();
+        //添加灯光
+        addLight();
+        //添加GUI控制
+        addGui();
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        //窗口变化监听
+        window.addEventListener( 'resize', onWindowResize, false );
+        //鼠标移动监听
+        window.addEventListener('mousedown',mouseMove);
+        //进行渲染
+        renderScene();
+
+    }
+
+    //添加GUI
+    function addGui() {
+
+        //新建控制面板变量
+        var gui=new dat.GUI({width:300});
+
+        //打开控制面板
+        gui.open();
+
+        var myTitle=gui.addFolder('混合设置');
+
+        var controls = new function (e) {
+            this.srcType = src[4]
+            this.dstType = dst[5]
+            this.blendEquation=blendEquation[0]
+        };
+
+        var srcType=myTitle.add(controls, 'srcType',src);
+        var dstType=myTitle.add(controls, 'dstType',dst);
+        var blendEquationType=myTitle.add(controls, 'blendEquation',blendEquation);
+        //混合方程
+        blendEquationType.onChange(function (e) {
+            material.blendEquation=THREE[e]
+        })
+        //源因子状态改变监听
+        srcType.onChange(function (e) {
+           material.blendSrc=THREE[e];
+        })
+        //目标因子状态改监听
+        dstType.onChange(function (e) {
+            material.blendDst=THREE[e];
+        })
+    }
+
+    //添加材质和可视化界面的方法
+    function addMesh(){
+
+        //添加透镜
+        var texture1 = new THREE.TextureLoader().load( "img/lgq.png");
+        material = new THREE.MeshLambertMaterial( {
+            map:texture1,                           //纹理
+            transparent: true,                      //开启透明
+            blending:THREE[blending],               //混合方式
+            blendSrc:THREE[src[4]],                 //源因子
+            blendDst:THREE[dst[5]],                 //目标因子
+            blendEquation: THREE.AddEquation,       //混合方程
+            side:THREE.DoubleSide                   //两面可见
+        } );
+
+        var geometry = new THREE.PlaneGeometry(10,10);
+        mesh = new THREE.Mesh(geometry,material);
+        mesh.position.y=10;
+        mesh.position.z=20;
+        scene.add(mesh);
+
+        //添加场景中的其他物体
+        var objLoader = new THREE.OBJLoader();
+        objLoader.load( 'obj/pm.obj', function ( object ) {
+            object.receiveShadow=true;//接受平面阴影
+            pm=object.clone();
+            pm.position.x=0;
+            pm.position.y=0;
+            pm.position.z=0;
+            console.log(pm);
+            scene.add(pm);
+        });
+        objLoader.load( 'obj/cft.obj', function ( object ) {
+            object.receiveShadow=true;//接受平面阴影
+            cft=object.clone();
+            cft.position.x=0;
+            cft.position.y=0;
+            cft.position.z=-10;
+            scene.add(cft);
+        });
+        objLoader.load( 'obj/ch.obj', function ( object ) {
+            object.receiveShadow=true;//接受平面阴影
+            ch=object.clone();
+            ch.position.x=0;
+            ch.position.y=0;
+            ch.position.z=10;
+            scene.add(ch);
+        });
+        objLoader.load( 'obj/qt.obj', function ( object ) {
+            object.receiveShadow=true;//接受平面阴影
+            qt=object.clone();
+            qt.position.x=-10;
+            qt.position.y=0;
+            qt.position.z=0;
+            scene.add(qt);
+        });
+        objLoader.load( 'obj/yh.obj', function ( object ) {
+            object.receiveShadow=true;//接受平面阴影
+            yh=object.clone();
+            yh.position.x=10;
+            yh.position.y=0;
+            yh.position.z=0;
+            scene.add(yh);
+        });
+    }
+
+    //添加灯光
+    function addLight() {
+
+        var spotLight = new THREE.DirectionalLight(0x999999); 	//创建方向灯光源
+        spotLight.position.set(0,100,100);                      //方向灯位置
+        scene.add(spotLight);                                   //场景添加方向灯
+        var ambientLight=new THREE.AmbientLight(0x404040);     //创建环境光
+        scene.add(ambientLight);                                //场景添加环境光
+    }
+
+    //鼠标移动
+    function mouseMove(event) {
+
+        if(!mesh)//如果模型不存在
+        {
+            return;
+        }else
+        {
+            var x, y;
+            if ( event.changedTouches ) {//获得移动设备的触摸改变的值
+                x = event.changedTouches[ 0 ].pageX;//获得x坐标
+                y = event.changedTouches[ 0 ].pageY;//获得y坐标
+            } else {
+                x = event.clientX;//获得鼠标的x坐标
+                y = event.clientY;//获得y坐标
+            }
+            var temp=2;
+            if(x<window.innerWidth/3)
+            {
+                mesh.position.x=mesh.position.x-temp;
+            }else if(x>window.innerWidth/3*2)
+            {
+                mesh.position.x=mesh.position.x+temp;
+            }else if(y>window.innerHeight/2)
+            {
+                mesh.position.y=mesh.position.y-temp;
+            }else if(y<window.innerHeight/2)
+            {
+                mesh.position.y=mesh.position.y+temp;
+            }
+            //console.log("x:"+x+"|y:"+y);
+        }
+    }
+
+    //窗口变化监听
+    function onWindowResize(){
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;     //获得当前摄像机缩放比
+        camera.updateProjectionMatrix();    //更新矩阵
+        renderer.setSize( width, height );  //设置渲染场景
+    }
+
+    function initScene() {
+
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x666666));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        //设置摄像机位置
+        camera.position.x = 0;
+        camera.position.y = 20;
+        camera.position.z = 50;
+        //设置摄像机焦点
+        camera.lookAt(scene.position);
+    }
+
+    //渲染场景
+    function renderScene() {
+        renderer.render( scene, camera );
+        requestAnimationFrame(renderScene);
+    }
+
+    //当网页加载后执行init方法
+    window.onload = init;
+</script>
+</body>
+</html>

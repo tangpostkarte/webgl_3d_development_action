@@ -1,0 +1,76 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Sample1_6</title></head>
+<body>
+<p>点击此图像即为提交，这里为用图片代替按钮，alt 属性只能与type="image"配合使用。它为图像输入规定替代文本。</p>
+<form>
+  <p>姓: <input type="text" name="姓" /></p>
+  <p>名: <input type="text" name="名" /></p>
+  <input type="image" src="pic/back.png" alt="Submit" width="64" height="64"/>
+</form>
+<!--即使 alt 属性不是必需的属性，但是当输入类型为 image 时，仍然应该设置该属性。如果不使用该属性，
+就有可能对文本浏览器或非可视的浏览器造成使用障碍。除了 Safari，所有主流的浏览器都支持 "alt" 属性。
+height 属性只适用于 <input type="image">，它规定 image input 的高度。其属性pixel以像素为单位，%为百分比为单位。-->
+<p>这里是表单的自动完成功能测试，填写并提交表单，然后再输入一遍相同的数据的开头来体验一下自动完成功能。</p>
+<form autocomplete="on">
+姓:<input type="text" name="姓" /><br />
+名: <input type="text" name="名" /><br />
+<input type="submit" />
+</form>
+<p></p>
+<!--自动完成允许浏览器预测对字段的输入。当用户在字段开始键入时，浏览器基于之前键入过的值，
+应该显示出在字段中填写的选项。autocomplete 属性适用于 <form>，以及下面的 <input> 类型：
+text, search, url, telephone, email, password, datepickers, range 以及 color。-->
+<p>这里显示的为加载时自动获得焦点与禁用输入字段示例，使用该属性input元素获得焦点。</p>
+<form>
+  姓: <input type="text" name="姓" autofocus><br>
+  名: <input type="text" name="名" disabled="disabled"><br>
+  <input type="submit">
+</form>
+<!--被禁用的 input 元素既不可用，也不可点击。可以设置 disabled 属性，直到满足某些其他的
+条件为止（比如选择了一个复选框等等）。然后，就需要通过 JavaScript 来删除 disabled 值，
+将 input 元素的值切换为可用。-->
+<p>这里显示的为max与min属性示例，max 属性与 min 属性配合使用，可创建合法值范围。</p>
+<form>
+输入数量: <input type="number" name="输入数量" min="0" max="10" />
+<input type="submit" />
+</form>
+<!--max 和 min 属性适用于以下 <input> 类型：number, range, date, datetime, datetime-local, month, time 以及 week。-->
+<p>这里为输入段字符最大长度属性示例：</p>
+<form>
+  <p>姓: <input type="text" name="姓" maxlength="85" /></p>
+  <p>名: <input type="text" name="名" maxlength="55" /></p>
+  <input type="submit" value="Submit" />
+  <!--maxlength 属性规定输入字段的最大长度，以字符个数计。
+maxlength 属性与 <input type="text"> 或 <input type="password"> 配合使用。-->
+</form>
+<p>此处示例可接受多个值的上传字段，请尝试在浏览文件时选取一个以上的文件。</p>
+<form>
+选择图片：<input type="file" name="img" multiple="multiple" />
+<input type="submit" />
+</form>
+<p>这里为通过pattern属性规定用于验证输入字段的模式，输入时请按要求输入三个字母的国家代码：</p>
+<form>
+国家代码：<input type="text" name="country_code" pattern="[A-z]{3}"
+title="三个字母的国家代码" />
+<input type="submit" />
+</form>
+<!--模式指的是正则表达式，pattern 属性适用于以下 <input> 类型：text, search, 
+url, telephone, email 以及 password 。pattern 属性规定用于验证输入字段的模式。-->
+<p>接下来我们演示的输入字段预期值属性，提供可描述输入字段预期值的提示信息，
+该提示会在输入字段为空时显示，并会在字段获得焦点时消失。</p>
+<form>
+<input type="search" name="user_search" placeholder="输入字段预期值" />
+<input type="submit" />
+</form>
+<!--placeholder 属性适用于以下的 <input> 类型：text, search, url, telephone, email 以及 password。-->
+<p>接下来我们演示的为required与size属性，required属性规定必需在提交之前填写输入字段。如果不填写任何内容，则会有提示出现。</p>
+<form>
+姓名: <input type="text" name="usr_name" required="required" size="35"/>
+<input type="submit" value="提交" />
+</form>
+<!--required 属性适用于以下 <input> 类型：text, search, url, telephone, email,
+ password, date pickers, number, checkbox, radio 以及 file。-->
+</body>
+</html>

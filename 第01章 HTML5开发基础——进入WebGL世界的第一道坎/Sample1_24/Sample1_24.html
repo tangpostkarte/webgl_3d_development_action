@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sampel1_24</title>
+<script src="js/modernizr.js"></script>
+<script src="js/arc.js"></script>
+<script src="js/bezier.js"></script>
+<script src="js/line.js"></script>
+<script src="js/linejoin.js"></script>
+<script src="js/rect.js"></script>
+<script type="text/javascript">
+var context;
+function eventWindowLoaded(){
+	canvasApp();
+}
+
+function canvasSupport(){
+	return Modernizr.canvas;
+}
+function canvasApp(){
+	if(!canvasSupport()){
+		return;
+	}else{
+		var theCanvas = document.getElementById("canvas");
+		context=theCanvas.getContext("2d");
+	}
+	drawScreen();
+	//arcdrawScreen();
+	//bezierdrawScreen();
+	//linedrawScreen();
+	//linejoindrawScreen();
+	//rectdrawScreen();
+	function drawScreen()//绘制2D图形的方法
+	{
+		//画布背景色为白色不利于辨识，填充一个有颜色的区域便于标示。
+		context.fillStyle="#aaaaaa";
+		context.fillRect(0,0,500,500);
+		context.fillStyle='#000000';
+		context.font='20px _sans';
+		context.textBaseline='top';
+		context.fillText("Canvas!",0,0);
+	}
+}
+</script>
+</head>
+<body onload="eventWindowLoaded();">
+<div style="position: absolute; top: 50px;left:50px;">
+<canvas id="canvas" width="500" height="500">
+若看到这个文字，说明浏览器不支持WebGL!</canvas></div>
+</body>
+</html>  

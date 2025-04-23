@@ -1,0 +1,189 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Spinning WebGL Box</title>
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+	<script type="text/javascript" src="js/Desert.js"></script>
+	<script type="text/javascript" src="js/Tree.js"></script>
+	<script type="text/javascript" src="js/TreeGroup.js"></script>
+	<script type="text/javascript" src="js/SingleTree.js"></script>
+	<script>
+        var alist= new Array();
+        var tr;
+        var tree;
+        var cx=0;
+        var cz=15;
+        var tg;
+        var tfd;
+        var x=5;
+        var z=10;
+        var yAngle=0;
+        var direction=0;//视线方向
+        var Offset=15;
+        var DEGREE_SPAN=(3.0/180.0*Math.PI);//摄像机每次转动的角度
+        var canvas;
+        //绕y轴旋转角度
+        var currentYAngle=0;
+        //绕x轴旋转角度
+        var currentXAngle=0;
+        //旋转角度步长值
+        var incAngle=0.5;
+        var mPreviousY;//上次的触控位置Y坐标
+        var mPreviousX;//上次的触控位置X坐标
+        var down=false;//是否移动标志位
+        function dianji()
+        {
+            document.onmousedown = function(event)
+            {	down=true;//按下鼠标
+                mPreviousX=event.pageX;//获取触控点x坐标
+                mPreviousY=event.pageY;//获取触控点y坐标
+            }
+            document.onmousemove = function(event)//鼠标移动
+            {
+            }
+            document.onmouseup = function(event)
+            {
+                down=false;//抬起鼠标
+            }
+            if(down)
+            {
+                if(mPreviousX<canvas.width/2&&mPreviousY<canvas.height/2)
+                {Offset=Offset-0.5;}
+                else if(mPreviousX>canvas.width/2&&mPreviousY<canvas.height/2)
+                {Offset=Offset+0.5;}
+                else if(mPreviousX<canvas.width/2&&mPreviousY>canvas.height/2)
+                {direction=direction+DEGREE_SPAN;}
+                else if(mPreviousX>canvas.width/2&&mPreviousY>canvas.height/2)
+                {direction=direction-DEGREE_SPAN;}
+            }
+        }
+        function dianji1(){
+            canvas = document.getElementById('bncanvas');
+            canvas.ontouchstart=function(e){
+                down=true;
+                e.preventDefault();
+                var touch = e.touches[0];
+                //获取当前触控点的坐标，等同于MouseEvent事件的clientX/clientY
+                mPreviousX=touch.clientX;//获取触控点x坐标
+                mPreviousY=touch.clientY;//获取触控点y坐标
+            };
+            canvas.ontouchmove = function(e){
+                e.preventDefault();
+            };
+            canvas.ontouchend = function(e){
+                down=false;
+            };
+            if(down)
+            {
+                if(mPreviousX<canvas.width/2&&mPreviousY<canvas.height/2)
+                {Offset=Offset-0.5;}
+                else if(mPreviousX>canvas.width/2&&mPreviousY<canvas.height/2)
+                {Offset=Offset+0.5;}
+                else if(mPreviousX<canvas.width/2&&mPreviousY>canvas.height/2)
+                {direction=direction+DEGREE_SPAN;}
+                else if(mPreviousX>canvas.width/2&&mPreviousY>canvas.height/2)
+                {direction=direction-DEGREE_SPAN;}
+            }
+        }
+        //初始化的方法
+        function start()
+        {
+            //获取3D Canvas
+            var canvas = document.getElementById('bncanvas');
+            //获取GL上下文
+            gl = canvas.getContext('webgl2', { antialias: true });
+            if (!gl) //若获取GL上下文失败
+            {
+                alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                return;
+            }
+            //设置视口
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            //设置屏幕背景色RGBA
+            gl.clearColor(1.0,1.0,1.0,1.0);
+            //初始化变换矩阵
+            ms.setInitStack();
+            //设置投影参数
+            ms.setProjectFrustum(-1.5,1.5,-1,1,1,1000);
+            gl.enable(gl.DEPTH_TEST);//开启深度检测
+            //加载着色器程序
+            loadShaderFile("shader/vertex.bns",0,0);//带光照的物体
+            loadShaderFile("shader/fragment.bns",0,1);//带光照的物体
+
+            if(shaderProgArray[0])//如果着色器已加载完毕
+            {
+                tr=new Triangle(gl,shaderProgArray[0]);//创建三角形绘制对象
+                tfd=new Tree(gl,shaderProgArray[0]);
+                tg=new TreeGroup(gl);
+            }
+            else
+            {
+                setTimeout(function(){	tr=new Desert(gl,shaderProgArray[0]);
+                    tfd=new Tree(gl,shaderProgArray[0]);
+                    tg=new TreeGroup(gl);
+                },60); //休息60ms后再执行
+            }
+            loadImageTexture(gl, "pic/desert.bmp","desert");
+            loadImageTexture(gl, "pic/tree.png","tree");
+            setInterval("drawFrame();",20);
+        }
+        function drawFrame()
+        {
+            dianji();
+            dianji1();
+            cx=(Math.sin(direction)*Offset);//观察目标点x坐标
+            cz=(Math.cos(direction)*Offset);//观察目标点z坐标
+            tg.calculateBillboardDirection();
+            ms.setCamera(cx,1,cz,0,0,0,0,1,0);
+            if((!tg)||(!tfd)||(!tr)||(!texMap["tree"]))
+            {
+                console.log("加载未完成！");//提示信息
+                return;
+            }
+            if(alist.length==0)
+            {tg.treeGroupadd(gl);}
+
+            //重写的比较两个树木离摄像机距离的方法
+            alist.sort(function compare(a,b)
+            {
+                var xs=a.x-cx;
+                var zs=a.z-cz;
+                var xo=b.x-cx;
+                var zo=b.z-cz;
+                var disA=Math.sqrt(xs*xs+zs*zs);
+                var disB=Math.sqrt(xo*xo+zo*zo);
+                return ((disA-disB)==0)?0:((disA-disB)>0)?-1:1;
+            });
+            //清除着色缓冲与深度缓冲
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            //保护现场
+            ms.pushMatrix();
+            ms.scale(0.3,0.3,0.3)
+            //绘制物体
+            tr.drawSelf(ms,texMap["desert"]);
+            //恢复现场
+            ms.popMatrix();
+            gl.enable(gl.BLEND);
+            //设置混合因子
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            ms.pushMatrix();
+            ms.translate(0, -0.1, 0);
+            tg.drawSelf(ms,texMap["tree"]);
+            ms.popMatrix();
+            //关闭混合
+            gl.disable(gl.BLEND);
+        }
+	</script>
+</head>
+
+<body onload="start();">
+<canvas height="800" width="1200" id="bncanvas">
+	若看到这个文字，说明浏览器不支持WebGL!
+</canvas>
+
+</body>
+</html>

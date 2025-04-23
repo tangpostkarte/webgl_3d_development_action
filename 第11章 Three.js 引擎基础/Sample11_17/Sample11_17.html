@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_17</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+	varying vec3 vPosition;					//用于传递给片元着色器的顶点位置
+    void main()
+    {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+	vPosition=position.xyz;				//将顶点的原始位置传递给片元着色器
+    }
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+	precision mediump float;					//设置默认浮点精度
+	varying vec3 vPosition;					//接收从顶点着色器传过来的顶点位置
+	void main(){
+		vec4 bColor=vec4(0.678,0.231,0.129,1.0);	//砖块的颜色
+		vec4 mColor=vec4(0.763,0.657,0.614,1.0);	//间隔的颜色
+		float y=vPosition.y;						//提取顶点的y坐标值
+		y=mod((y+100.0)*4.0,4.0);				//折算出区间值
+		if(y>1.8){								//当区间值大于指定值时
+			gl_FragColor = bColor;				//给此片元颜色值
+		}else{								//当区间值不大于指定值时
+			gl_FragColor = mColor;				//给此片元颜色值
+	}}
+</script>
+<div id="WebGL-output">
+</div>
+
+
+<script type="text/javascript">
+
+
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0x000000, 1.0));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+        var boxGeometry = new THREE.BoxGeometry(20, 20, 20);//新建正方体
+        var meshMaterial1 = createMaterial("vertex-shader", "fragment-shader");//创建着色器材质
+        var box = new THREE.Mesh(boxGeometry, meshMaterial1);//创建网格对象
+        scene.add(box);//将正方体添加场景中
+        //设置摄像机的位置
+        camera.position.x = 30;
+        camera.position.y = 30;
+        camera.position.z = 30;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));//设置摄像机焦点
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        var step = 0;
+        render();
+        function render() {
+            box.rotation.y = step += 0.01;//更新正方体的旋转角度
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+        function createMaterial(vertexShader, fragmentShader) {//创建着色器的方法
+            var meshMaterial = new THREE.ShaderMaterial({
+                uniforms: {},//如果着色器中有uniforms类型的值，可在此处传入
+                vertexShader:document.getElementById(vertexShader).innerHTML,//读取顶点着色器的代码
+                fragmentShader:document.getElementById(fragmentShader).innerHTML,//读取片元着色器的代码
+                transparent: true//开启透明
+            });
+            return meshMaterial;//返回创建好的材质
+        }
+
+
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

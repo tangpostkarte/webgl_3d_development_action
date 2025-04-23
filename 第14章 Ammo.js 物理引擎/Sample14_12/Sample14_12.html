@@ -1,0 +1,298 @@
+<html lang="en">
+    <head>
+        <title>Ammo.js Sample14_12</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #61443e;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+
+                background-color: #bfd1e5;
+                margin: 0px;
+                overflow: hidden;
+            }
+
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+            }
+
+            a {
+
+                color: #a06851;
+            }
+
+        </style>
+    </head>
+    <body>
+    <div id="info">Ammo.js Sample13_12<br>点击鼠标下落箱子</div>
+        <div id="container"><br /><br /><br /><br /><br /></div>
+
+        <script src="build/ammo/ammo.js"></script>
+
+        <script src="build/three/three.js"></script>
+        <script src="build/three/OrbitControls.js"></script>
+        <script src="build/three/Detector.js"></script>
+        <script src="build/three/stats.min.js"></script>
+
+        <script>
+
+            Ammo().then(function(Ammo) {
+                    //检测是否支持WebGL
+                    if ( ! Detector.webgl ) {
+                        Detector.addGetWebGLMessage();
+                        document.getElementById( 'container' ).innerHTML = "";
+                    }
+                    // 渲染变量
+                    var container, stats;
+                    var camera, controls, scene, renderer;
+                    var textureLoader;
+                    var clock = new THREE.Clock();
+
+                    // 物理计算变量
+                    var gravityConstant = -9.8;
+                    var softBodySolver;
+                    var collisionConfiguration;
+                    var dispatcher;
+                    var broadphase;
+                    var solver;
+                    var physicsWorld;
+                    var rigidBodies = [];
+                    var margin = 0.05;
+                    var hinge;
+                    var cloth;
+                    var transformAux1 = new Ammo.btTransform();
+                    var boxMaterial;
+
+                    var time = 0;
+                    var armMovement = 0;
+
+                    init();
+                    animate();
+
+                    //初始化渲染和物理计算
+                    function init() {
+                        initGraphics();
+                        initPhysics();
+                        createObjects();
+                    }
+
+                    //初始化渲染需要
+                    function initGraphics() {
+                        container = document.getElementById( 'container' );
+                        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+                        scene = new THREE.Scene();
+                        camera.position.x = -12;
+                        camera.position.y = 7;
+                        camera.position.z =  4;
+                        controls = new THREE.OrbitControls( camera );
+                        controls.target.y = 2;
+                        renderer = new THREE.WebGLRenderer();
+                        renderer.setClearColor( 0xbfd1e5 );
+                        renderer.setPixelRatio( window.devicePixelRatio );
+                        renderer.setSize( window.innerWidth, window.innerHeight );
+                        textureLoader = new THREE.TextureLoader();
+                        var ambientLight = new THREE.AmbientLight( 0x404040 );
+                        scene.add( ambientLight );
+                        var light = new THREE.DirectionalLight( 0xffffff, 1 );
+                        light.position.set( -7, 10, 15 );
+                        scene.add( light );
+                        container.innerHTML = "";
+                        container.appendChild( renderer.domElement );
+                        window.addEventListener( 'resize', onWindowResize, false );
+                    }
+
+                    function initPhysics() {//初始化物理世界
+
+                        //表示碰撞检测配置信息
+                        collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+                        //碰撞检测算法分配器
+                        dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+                        //粗测算法
+                        broadphase = new Ammo.btDbvtBroadphase();
+                        //约束解决器
+                        solver = new Ammo.btSequentialImpulseConstraintSolver();
+                        //软体约束
+                        softBodySolver = new Ammo.btDefaultSoftBodySolver();
+                        //创建模拟软体的物理世界类
+                        physicsWorld = new Ammo.btSoftRigidDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
+                        //设置重力约束
+                        physicsWorld.setGravity( new Ammo.btVector3( 0, gravityConstant, 0));
+                        //设置重力
+                        physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
+                    }
+
+                    function createObjects() {
+                        var pos = new THREE.Vector3();
+                        var quat = new THREE.Quaternion();
+                        pos.set( 0, -0.5, 0 );
+                        quat.set( 0, 0, 0, 1 );
+                        var ground = createParalellepiped( 40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));
+                        textureLoader.load( "texture/grass.png", function(texture){
+                            texture.wrapS = THREE.RepeatWrapping;
+                            texture.wrapT = THREE.RepeatWrapping;
+                            texture.repeat.set(40,40);
+                            ground.material.map = texture;
+                            ground.material.needsUpdate = true;
+                        });
+
+                        pos.set( -3,3,2);//左下角小正方体的位置
+                        var dingDian_zuoxia = createParalellepiped( 0.1, 0.1, 0.1, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));//创建左下角小正方体
+                        scene.add(dingDian_zuoxia);//将左下角小正方体添加到场景中
+                        pos.set( -3,3,-2);//右下角小正方体的位置
+                        var dingDian_youxia = createParalellepiped( 0.1, 0.1, 0.1, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));//创建右下角小正方体
+                        scene.add(dingDian_youxia);//将右下角的小正方体添加到场景中
+                        pos.set( 0,3,-2);//左上角小正方体的位置
+                        var dingDian_zuoshang = createParalellepiped( 0.1, 0.1, 0.1, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));//创建左上角小正方体
+                        scene.add(dingDian_zuoshang);
+                        pos.set( 0,3,2);//右上角小正方体的位置
+                        var dingDian_youshang = createParalellepiped( 0.1, 0.1, 0.1, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));//创建右上角小正方体
+                        scene.add(dingDian_youshang);//将右上角的小正方体添加到场景中
+
+                        //布料图形
+                        var clothWidth = 4;//软布的宽度
+                        var clothHeight = 3;//软布的高度
+                        var clothNumSegmentsZ = clothWidth * 5;//Z轴上的分割数
+                        var clothNumSegmentsY = clothHeight * 5;//Y轴上的分割数
+                        var clothSegmentLengthZ = clothWidth / clothNumSegmentsZ;//被分割后Z轴上每段的长度
+                        var clothSegmentLengthY = clothHeight / clothNumSegmentsY;//被分割后Y轴上每段的长度
+                        var clothPos = new THREE.Vector3( -3, 3, 2 );//软布的位置
+
+                        var clothGeometry = new THREE.PlaneBufferGeometry( clothWidth, clothHeight, clothNumSegmentsZ, clothNumSegmentsY );//
+                        clothGeometry.rotateY( Math.PI * 0.5 );
+                        clothGeometry.translate( clothPos.x, clothPos.y + clothHeight * 0.5, clothPos.z - clothWidth * 0.5 );
+                        var clothMaterial = new THREE.MeshLambertMaterial( { color: 0xFFFFFF, side: THREE.DoubleSide } );
+                        cloth = new THREE.Mesh( clothGeometry, clothMaterial );
+
+                        scene.add( cloth );
+                        textureLoader.load( "texture/grid.png", function( texture ) {
+                            texture.wrapS = THREE.RepeatWrapping;
+                            texture.wrapT = THREE.RepeatWrapping;
+                            texture.repeat.set( clothNumSegmentsZ, clothNumSegmentsY );
+                            cloth.material.map = texture;
+                            cloth.material.needsUpdate = true;
+                        });
+                        textureLoader.load( "texture/box.jpg", function( texture ) {
+                            boxMaterial = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+                        });
+
+                        // 布料物理计算对象
+                        var softBodyHelpers = new Ammo.btSoftBodyHelpers();//软布的构造器
+                        var clothCorner00 = new Ammo.btVector3( clothPos.x+clothHeight, clothPos.y , clothPos.z );//确定软布右上角的坐标
+                        var clothCorner01 = new Ammo.btVector3( clothPos.x+clothHeight, clothPos.y , clothPos.z - clothWidth );//确定软布左上角的坐标
+                        var clothCorner10 = new Ammo.btVector3( clothPos.x, clothPos.y, clothPos.z );//确定软布右下角的坐标
+                        var clothCorner11 = new Ammo.btVector3( clothPos.x, clothPos.y, clothPos.z - clothWidth );//确定软布左下角的坐标
+                        var clothSoftBody = softBodyHelpers.CreatePatch( physicsWorld.getWorldInfo(), clothCorner00, clothCorner01, clothCorner10, clothCorner11, clothNumSegmentsZ + 1, clothNumSegmentsY + 1, 0, true );//创建软布
+                        var sbConfig = clothSoftBody.get_m_cfg();//获得软布的设置信息
+                        sbConfig.set_viterations( 10 );//设置迭代次数
+                        sbConfig.set_piterations( 10);//设置迭代次数
+
+                        clothSoftBody.setTotalMass( 0.9, false );//设置软布的总重量
+                        Ammo.castObject( clothSoftBody, Ammo.btCollisionObject ).getCollisionShape().setMargin( margin * 3 );
+                        physicsWorld.addSoftBody( clothSoftBody, 1, -1 );//将软布添加到物理世界中
+                        cloth.userData.physicsBody = clothSoftBody;//将创建出的软体与绘制对象绑定
+                        clothSoftBody.setActivationState( 4 );//将软布设置为运动的
+
+                        // Glue the cloth to the arm
+                        var influence = 0.5;
+                        clothSoftBody.appendAnchor( 0, dingDian_zuoshang.userData.physicsBody, false, influence );//在软布左上角设置锚点
+                        clothSoftBody.appendAnchor( clothNumSegmentsZ, dingDian_youshang.userData.physicsBody, false, influence );//在软布右上角设置锚点
+                        clothSoftBody.appendAnchor( 335, dingDian_zuoxia.userData.physicsBody, false, influence );//在软布左下角设置锚点
+                        clothSoftBody.appendAnchor( 315, dingDian_youxia.userData.physicsBody, false, influence );//在软布右下角设置锚点
+                    }
+
+                    function createParalellepiped( sx, sy, sz, mass, pos, quat, material ) {
+                        var threeObject = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+                        var shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
+                        shape.setMargin( margin );
+                        createRigidBody( threeObject, shape, mass, pos, quat );
+                        return threeObject;
+                    }
+
+                    function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
+
+                        threeObject.position.copy( pos );
+                        threeObject.quaternion.copy( quat );
+                        var transform = new Ammo.btTransform();
+                        transform.setIdentity();
+                        transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+                        transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+                        var motionState = new Ammo.btDefaultMotionState( transform );
+                        var localInertia = new Ammo.btVector3( 0, 0, 0 );
+                        physicsShape.calculateLocalInertia( mass, localInertia );
+                        var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
+                        var body = new Ammo.btRigidBody( rbInfo );
+                        threeObject.userData.physicsBody = body;
+                        scene.add( threeObject);
+                        if ( mass > 0 ) {
+                            rigidBodies.push( threeObject );
+                            body.setActivationState( 4 );
+                        }
+                        physicsWorld.addRigidBody( body );
+                    }
+                    function onWindowResize() {
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize( window.innerWidth, window.innerHeight );
+                    }
+                    function animate() {
+                        requestAnimationFrame( animate );
+                        render();
+                    }
+                    function render() {
+                        var deltaTime = clock.getDelta();
+                        updatePhysics( deltaTime );
+                        controls.update( deltaTime );
+                        renderer.render( scene, camera );
+                        time += deltaTime;
+                    }
+                    function updatePhysics( deltaTime ) {
+                        physicsWorld.stepSimulation( deltaTime, 10 );//更新物理世界
+
+                        // Update cloth
+                        var softBody = cloth.userData.physicsBody;//获得软布的软体
+                        var clothPositions = cloth.geometry.attributes.position.array;//获取软布顶点位置数组
+                        var numVerts = clothPositions.length / 3;//得到软布中顶点数量
+                        var nodes = softBody.get_m_nodes();//获得软布的节点
+                        var indexFloat = 0;//初始化索引
+                        for ( var i = 0; i < numVerts; i ++ ) {//对顶点进行遍历
+                            var node = nodes.at( i );//找到第i个节点
+                            var nodePos = node.get_m_x();//找到此节点的位置
+                            clothPositions[ indexFloat++ ] = nodePos.x();//更新此节点的X坐标
+                            clothPositions[ indexFloat++ ] = nodePos.y();//更新此节点的Y坐标
+                            clothPositions[ indexFloat++ ] = nodePos.z();//更新此节点的Z坐标
+                        }
+                        cloth.geometry.computeVertexNormals();//重新计算法向量
+                        cloth.geometry.attributes.position.needsUpdate = true;//设置顶点位置更新
+                        cloth.geometry.attributes.normal.needsUpdate = true;//设置法向量数据更新
+
+                        for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {//根据刚体更新绘制对象的方法
+                            var objThree = rigidBodies[ i ];
+                            var objPhys = objThree.userData.physicsBody;
+                            var ms = objPhys.getMotionState();
+                            if ( ms ) {
+                                ms.getWorldTransform( transformAux1 );
+                                var p = transformAux1.getOrigin();
+                                var q = transformAux1.getRotation();
+                                objThree.position.set( p.x(), p.y(), p.z() );
+                                objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+                            }
+                        }
+                    }
+                    document.onmousedown=function(event)
+                    {		var mass=0.1;
+                        var pos = new THREE.Vector3(-2,5,0);
+                        var quat = new THREE.Quaternion(0,0,0,1);
+                        var box = createParalellepiped( 0.5, 0.5, 0.5, mass, pos, quat,boxMaterial);//创建右上角小正方体
+                        scene.add(box);
+                        box.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,-1,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+                    };
+            })
+        </script>
+
+    </body>
+</html>

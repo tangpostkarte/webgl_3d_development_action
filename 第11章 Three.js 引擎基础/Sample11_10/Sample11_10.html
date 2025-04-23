@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_10</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/RectAreaLightUniformsLib.js"></script>
+	<script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    var material;
+    var spotLight;
+    var rectLight;
+    var ambientLight;
+    var matStdParams;
+    var rectLightHelper;
+    var param = {};
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer({ antialias: true });//新建渲染器
+		renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+		renderer.shadowMap.enabled = true;			//开启渲染器的投影效果
+		var planeGeometry = new THREE.PlaneGeometry(100, 100);//新建长方形平面
+        var planeMaterial = new THREE.MeshStandardMaterial({color: 0xffffff});//新建平面使用的材质
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);//新建网格对象
+        plane.rotation.x = -0.5 * Math.PI;//设置平面的旋转角度
+        plane.position.x = -15;//设置长方形平面的位置
+        plane.position.y = 0;
+        plane.position.z = 0;
+		plane.receiveShadow =true;
+        scene.add(plane);//将长方形平面添加到场景中
+        camera.position.x = 20;//设置摄像机位置
+        camera.position.y = 15;
+        camera.position.z = 20;
+        camera.lookAt(new THREE.Vector3());//设置摄像机焦点
+        scene.add(camera);
+		var radius = 30;//区域光源的圆形轨道半径
+		var LightAngle = 0;//点光源旋转的角度
+        var LightThete=Math.PI/180;
+
+		
+
+		addGeometry();//添加几何对象
+        addLight();
+        addGUI();
+        renderScene();//渲染画面
+
+
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onResize, false );
+
+		
+        function onResize() {
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            camera.aspect = ( window.innerWidth / window.innerHeight );
+            camera.updateProjectionMatrix();
+
+        }
+        
+        function addGUI() {
+            var gui = new dat.GUI( { width: 300 } );
+            gui.open();
+            param={
+                '光源宽度': rectLight.width,         //光源宽度
+                '光源高度': rectLight.height,           //光源高度
+                '光源颜色': rectLight.color.getHex(),     //光源颜色
+                '光源强度': rectLight.intensity,     //光源强度
+                '环境光强度': ambientLight.intensity,  //环境光强度
+                '平滑度': material.roughness,    //粗糙度
+                '金属光泽': material.metalness     //金属光泽
+            };
+
+            var lightFolder = gui.addFolder( '光源设置' );
+
+            lightFolder.add( param, '光源宽度', 0.1, 50).onChange( function ( val ) {
+
+                rectLight.width = val;
+
+            } );
+
+            lightFolder.add( param, '光源高度', 0.1, 50 ).onChange( function ( val ) {
+
+                rectLight.height = val;
+
+            } );
+
+            lightFolder.addColor( param, '光源颜色' ).onChange( function ( val ) {
+
+                rectLight.color.setHex( val );
+
+            } );
+
+            lightFolder.add( param, '光源强度', 0.0, 10 ).onChange( function ( val ) {
+
+                rectLight.intensity = val;
+
+            } );
+
+            lightFolder.add( param, '环境光强度', 0.0, 1 ).step( 0.01 ).onChange( function ( val ) {
+
+                ambientLight.intensity = val;
+
+            } );
+
+            lightFolder.open();
+
+            var standardFolder = gui.addFolder( '材质设置' );
+
+
+            standardFolder.add( param, '平滑度', 0.0, 1.0 ).step( 0.01 ).onChange( function ( val ) {
+
+                material.roughness = val;
+
+            } );
+
+            // TODO (abelnation): use env map to reflect metal property
+            standardFolder.add( param, '金属光泽', 0.0, 1.0 ).step( 0.01 ).onChange( function ( val ) {
+
+                material.metalness = val;
+
+            } );
+
+            standardFolder.open();
+			
+
+        }
+        
+        //添加几何对象的方法
+        function addGeometry(){
+            matStdParams = { //设置平滑度
+                roughness: 0.044676705160855, // calculated from shininess = 1000
+                metalness: 0.2,//设置金属光泽
+                color:"#b33333"
+            };
+            var geometryArray=[];//存储几何对象的数组
+            geometryArray.push(new THREE.BoxGeometry(4, 4, 4));//新建正方体
+            geometryArray.push(new THREE.CylinderGeometry(1, 4, 4));//新建圆台
+            geometryArray.push(new THREE.SphereGeometry(2));//新建球体
+            geometryArray.push(new THREE.IcosahedronGeometry(4));//新建正二十面体
+            geometryArray.push(new THREE.OctahedronGeometry(3));//新建正八面体
+            geometryArray.push(new THREE.TetrahedronGeometry(3));//新建正四面体
+            geometryArray.push(new THREE.TorusGeometry(3, 1, 10, 10));//新建圆环
+            geometryArray.push(new THREE.TorusKnotGeometry(3, 0.5, 50, 20));//新建圆环结
+            material=new THREE.MeshStandardMaterial(matStdParams);
+            for(var i=0;i<geometryArray.length;i++){//遍历所有几何对象
+                var mesh=new THREE.Mesh(geometryArray[i], material);//创建网格对象
+                mesh.castShadow =true;//使网格体可以投射阴影
+                mesh.receiveShadow=true;//使网格体接收阴影
+                mesh.position.x=-24+Math.floor(i/2)*10;//确定网格对象的位置
+                mesh.position.y=7;
+                mesh.position.z=(i%2==0)?-7:7;
+                scene.add(mesh);//将网格对象添加到场景中
+            }
+        }
+
+        function addLight(){//添加灯光
+            var ambiColor = "#cccccc";//环境光颜色
+            ambientLight = new THREE.AmbientLight(ambiColor);//新建环境光
+            scene.add(ambientLight);//添加环境光
+            rectLight = new THREE.RectAreaLight("#ffffff",2,20,20);//创建区域灯光源
+            rectLight.position.set(-10,5,-10);					//设置光源位置
+            rectLight.rotation.x=-Math.PI;                      //使得光源对着物体
+            //rectLightHelper = new THREE.RectAreaLightHelper( rectLight );
+            //scene.add( rectLightHelper );
+            scene.add(rectLight);
+
+        }
+
+		function renderScene() {
+			LightAngle+=1;//设置移动增加量
+            rectLight.rotation.y-=LightThete;//设置旋转
+            rectLight.position.x =radius*Math.sin(LightAngle/180*Math.PI);//设置x轴移动
+            rectLight.position.z =radius*Math.cos(LightAngle/180*Math.PI);//设置z轴移动
+            rectLight.updateMatrixWorld();
+
+            camera.position.x=(radius+10)*Math.sin(LightAngle/180*Math.PI);//设置x轴移动
+            camera.position.z=(radius+10)*Math.cos(LightAngle/180*Math.PI);//设置z轴移动
+            camera.lookAt(new THREE.Vector3());//设置摄像机观察点
+            camera.updateProjectionMatrix();//更新矩阵
+            requestAnimationFrame(renderScene);//请求绘制下一帧
+            renderer.render(scene, camera);//渲染当前画面
+        }}
+		window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

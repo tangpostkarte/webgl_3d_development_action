@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sampel1_22</title>
+</head><body>
+<script type="text/javascript">
+	//创建自己的对象
+	tom={name:"Tom",age:21};
+    document.write("Name:"+tom.name+"<br>");   
+    document.write("Age:"+tom.age+"<br>");  
+	//对象可以看做数组，用数组形式访问对象
+	tom={name:"Tom",age:21};
+    document.write("Name:"+tom["name"]+"<br>");   
+    document.write("Age:"+tom["age"]+"<br>");
+	//对象的重用，可以像Java那样先声明类再new对象
+     function Student(sno,sname,sage,sclass)//声明student
+     {
+        this.sno=sno;
+        this.sname=sname;
+        this.sage=sage;
+        this.sclass=sclass;
+     }  
+     //创建Student对象
+     tom=new Student("10001","Tom",21,"97002");
+     document.write(tom.sname+"<br>");
+	 //给类添加方法
+     function Student1(sno,sname,sage,sclass)//声明student1
+     {
+        this.sno=sno;
+        this.sname=sname;
+        this.sage=sage;
+        this.sclass=sclass;
+        this.toString=toString;//把toString方法挂接到Student
+     }  
+     //声明toString方法
+     function toString()
+     {
+        var result="";
+        result+="学号: "+this.sno+"<br>";
+        result+="姓名: "+this.sname+"<br>";
+        result+="年龄: "+this.sage+"<br>";
+        result+="班级: "+this.sclass+"<br>";
+        return result;
+     }
+     //创建Student1对象
+     tom=new Student1("10001","Tom",21,"97002");
+     document.write(tom.toString());
+	 //对对象的属性进行遍历
+	 tom={name:"Tom",age:21,no:10001};
+     for(var i in tom)
+     {
+       document.write(i+":"+tom[i]+"<br>");
+     }
+	 //给已有对象注射新方法、新属性
+	 function toWyfString()
+     {
+          var ss=this.wyfTime+this.toGMTString();
+          return ss;
+     }
+     function toGMTString()
+     {
+          return "HaHa!!!";
+     }//通过使用原型可以向已有的对象类型注射新的方法、属性，
+	 //对对象的功能进行扩展，同时也能覆盖原有的方法。
+     Date.prototype.wyfTime="WYF: ";
+     Date.prototype.toWyfString = toWyfString;
+     d=new Date();
+     document.write(d.toWyfString()+"<br>");
+     document.write(d.toGMTString()+"<br>");
+     Date.prototype.toGMTString = toGMTString;
+     document.write(d.toGMTString()+"<br>");
+</script>
+</body></html>

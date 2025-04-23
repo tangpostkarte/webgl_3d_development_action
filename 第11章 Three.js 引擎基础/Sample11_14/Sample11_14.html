@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_14</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机位置
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        camera.position.x = 10;//设置摄像机位置
+        camera.position.y = 10;
+        camera.position.z = 10;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		var box;
+		function addMaterial(){//添加材质和可视化界面的方法
+        var boxGeometry = new THREE.BoxGeometry(4, 4, 4);//创建立方体的几何体
+		var array=[];
+		for(var i=0;i<6;i++)
+		{
+		array.push(new THREE.MeshBasicMaterial({color:0xffffff*Math.random()}));
+		}
+        var boxMaterial = new THREE.MeshFaceMaterial(array);//创建面材质
+        box = new THREE.Mesh(boxGeometry, boxMaterial);
+        scene.add(box);			//将球体添加到场景中
+		boxMaterial.wireframe=true;
+		var spotLight = new THREE.SpotLight("#ffffff"); 	//创建聚光灯光源
+		spotLight.position.set(30,30,30);
+		scene.add(spotLight);
+		}
+		addMaterial();
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();
+		function renderScene() {
+            box.rotation.y += 0.02;
+            requestAnimationFrame(renderScene);
+            renderer.render(scene, camera);
+        }
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="bulid/babylon.custom.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        //获取Canvas Dom对象
+        var canvas = document.getElementById("renderCanvas");
+        
+        //获取Babylon.js引擎
+        var engine = new BABYLON.Engine(canvas, true);
+
+        //创建场景方法
+        var createScene = function () {
+            //创建场景
+        	var scene = new BABYLON.Scene(engine);
+            //创建弧形旋转摄像机
+        	var camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 20, BABYLON.Vector3.Zero(), scene);
+            //添加控制
+        	camera.attachControl(canvas, true);
+        
+            camera.lowerRadiusLimit = 6;
+            camera.upperRadiusLimit = 20;
+            camera.useAutoRotationBehavior = true;
+
+            //创建半球光源
+        	var light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+            
+            //创建材质
+            var material=new BABYLON.StandardMaterial("boxMaterial", scene);
+            //设置材质的漫反射纹理
+            material.diffuseTexture=new BABYLON.Texture("textures/crate.png", scene);
+            //创建网格对象
+            var box1=BABYLON.MeshBuilder.CreateBox("box1", {height:3,width:3,depth:3}, scene);
+            box1.position.set(3,0,0);
+            box1.material=material;
+            
+            //克隆网格对象
+            var box2=box1.clone();
+            box2.position.set(-3,0,0);
+        	return scene;
+        }
+        
+        var scene = createScene()
+
+
+        //渲染循环
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        //窗口变化监听
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

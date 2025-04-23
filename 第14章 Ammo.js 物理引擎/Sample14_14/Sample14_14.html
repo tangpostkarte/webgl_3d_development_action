@@ -1,0 +1,299 @@
+<html lang="en">
+    <head>
+        <title>Ammo.js softbody rope demo</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #61443e;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+
+                background-color: #bfd1e5;
+                margin: 0px;
+                overflow: hidden;
+            }
+
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+            }
+
+            a {
+
+                color: #a06851;
+            }
+
+        </style>
+    </head>
+    <body>
+		<div id="info"><br></div>
+        <div id="container"><br /><br /><br /><br /><br /></div>
+
+        <script src="build/ammo/ammo.js"></script>
+
+        <script src="build/three/three.js"></script>
+        <script src="build/three/OrbitControls.js"></script>
+        <script src="build/three/Detector.js"></script>
+        <script src="build/three/stats.min.js"></script>
+        <script src="build/three/OBJLoader.js"></script>
+
+        <script>
+
+            Ammo().then(function (Ammo) {
+                // Detects webgl
+                if ( ! Detector.webgl ) {
+                    Detector.addGetWebGLMessage();
+                    document.getElementById( 'container' ).innerHTML = "";
+                }
+
+                // - Global variables -
+
+                // Graphics variables
+                var container;
+                var camera, controls, scene, renderer;
+                var textureLoader;
+                var clock = new THREE.Clock();
+
+                // Physics variables
+                var gravityConstant = -9.8;
+                var collisionConfiguration;
+                var dispatcher;
+                var broadphase;
+                var solver;
+                var physicsWorld;
+                var rigidBodies = [];
+                var margin = 0.05;
+                var hinge;
+                var rope;
+                var transformAux1 = new Ammo.btTransform();
+                var boxMaterial;
+                var ball;
+
+                var time = 0;
+                var armMovement = 0;
+
+                // - Main code -
+
+                init();
+                animate();
+
+
+                function init() {
+                    initGraphics();
+                    initPhysics();
+                    createObjects();
+                }
+
+                function initGraphics() {
+
+                    container = document.getElementById( 'container' );
+                    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+                    scene = new THREE.Scene();
+                    camera.position.x = -7;
+                    camera.position.y = 5;
+                    camera.position.z =  8;
+                    controls = new THREE.OrbitControls( camera );
+                    controls.target.y = 2;
+                    renderer = new THREE.WebGLRenderer();
+                    renderer.setClearColor( 0xbfd1e5 );
+                    renderer.setPixelRatio( window.devicePixelRatio );
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+                    textureLoader = new THREE.TextureLoader();
+                    var ambientLight = new THREE.AmbientLight( 0x404040 );
+                    scene.add( ambientLight );
+                    var light = new THREE.DirectionalLight( 0xffffff, 1 );
+                    light.position.set( -10, 10, 5 );
+                    scene.add( light );
+                    container.innerHTML = "";
+                    container.appendChild( renderer.domElement );
+                    window.addEventListener( 'resize', onWindowResize, false );
+                }
+
+                function initPhysics(){
+                    collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+                    dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+                    broadphase = new Ammo.btDbvtBroadphase();
+                    solver = new Ammo.btSequentialImpulseConstraintSolver();
+                    softBodySolver = new Ammo.btDefaultSoftBodySolver();
+                    physicsWorld = new Ammo.btSoftRigidDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
+                    physicsWorld.setGravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
+                    physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
+                }
+
+                function createObjects() {
+                    var pos = new THREE.Vector3();
+                    var quat = new THREE.Quaternion();
+                    // Ground
+                    pos.set( 0, - 0.5, 0 );
+                    quat.set( 0, 0, 0, 1 );
+                    var ground = createParalellepiped( 100, 1, 100, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) );
+                    textureLoader.load( "texture/grass.png", function( texture ) {
+                        texture.wrapS = THREE.RepeatWrapping;
+                        texture.wrapT = THREE.RepeatWrapping;
+                        texture.repeat.set( 40, 40 );
+                        ground.material.map = texture;
+                        ground.material.needsUpdate = true;
+                    });
+                    textureLoader.load( "texture/box.jpg", function( texture ){
+                        boxMaterial = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+                    });
+                    pos.set( -3, 6.6, 0 );//正方体的位置
+                    var start_point = createParalellepiped( 0.1, 0.1, 0.1, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));//创建绳索上方的正方体
+                    scene.add(start_point);//将正方体添加到场景中
+                    var ballMass = 1.2;//球体的质量
+                    var ballRadius = 0.6;//设置球体的半径
+                    ball = new THREE.Mesh(new THREE.SphereGeometry(ballRadius,20,20),new THREE.MeshPhongMaterial({color:0x202020}));
+                    var ballShape = new Ammo.btSphereShape( ballRadius );//新建球体的碰撞形状
+                    ballShape.setMargin( margin );//设置球体的边缘值
+                    pos.set( -3, 2, 0 );//设置球体位置
+                    quat.set( 0, 0, 0, 1 );//设置球体的旋转
+                    createRigidBody( ball, ballShape, ballMass, pos, quat );//创建球体的刚体
+                    ball.userData.physicsBody.setFriction( 0.5 );//设置球体的摩擦力
+
+                    var ropeNumSegments = 10;//绳索的分段数
+                    var ropeLength = 4;//绳索的长度
+                    var ropeMass = 3;//绳索的质量
+                    var ropePos = ball.position.clone();//绳索的位置
+                    ropePos.y += ballRadius;
+                    var segmentLength = ropeLength / ropeNumSegments;//每段的长度
+                    var ropeGeometry = new THREE.BufferGeometry();//新建绳索的几何对象
+                    var ropeMaterial = new THREE.LineBasicMaterial( { color: 0x000000,linewidth:20,wireframe:true,wireframeLinewidth :20});//线的材质
+
+                    var ropePositions = [];//存放绳索中顶点坐标的数组
+                    var ropeIndices = [];//存放绳索中索引的数组
+                    for ( var i = 0; i < ropeNumSegments + 1; i++ ) {//遍历每个顶点
+                        ropePositions.push( ropePos.x, ropePos.y + i * segmentLength, ropePos.z );//将顶点坐标放入数组中
+                    }
+                    for ( var i = 0; i < ropeNumSegments; i++ ) {	//遍历每个线段
+                        ropeIndices.push( i, i + 1 );				//将对应的索引放入数组中
+                    }
+                    ropeGeometry.setIndex(new THREE.BufferAttribute(new Uint16Array(ropeIndices),1));//设置索引值
+                    ropeGeometry.addAttribute('position',new THREE.BufferAttribute(new Float32Array(ropePositions),3));//设置顶点坐标
+                    ropeGeometry.computeBoundingSphere();//计算绳索的包围球
+                    rope = new THREE.LineSegments(ropeGeometry,ropeMaterial);//新建线段的绘制对象
+                    scene.add( rope );//将线段添加到场景中
+                    var softBodyHelpers = new Ammo.btSoftBodyHelpers();//新建软体的构造器
+                    var ropeStart = new Ammo.btVector3( ropePos.x, ropePos.y, ropePos.z );//绳索起始点的位置
+                    var ropeEnd = new Ammo.btVector3( ropePos.x, ropePos.y + ropeLength, ropePos.z );////绳索结束点的位置
+                    var ropeSoftBody = softBodyHelpers.CreateRope( physicsWorld.getWorldInfo(), ropeStart, ropeEnd, ropeNumSegments - 1, 0 );//创建绳索的物理部分
+                    var sbConfig = ropeSoftBody.get_m_cfg();//得到绳索的控制器
+                    sbConfig.set_viterations( 10 );//设置迭代次数
+                    sbConfig.set_piterations( 10 );
+                    ropeSoftBody.setTotalMass( ropeMass, false );//设置绳索的总质量
+                    Ammo.castObject( ropeSoftBody, Ammo.btCollisionObject ).getCollisionShape().setMargin( margin * 3 );//设置绳索的边缘值
+                    physicsWorld.addSoftBody( ropeSoftBody, 1, -1 );//将绳索添加到物理世界中
+                    rope.userData.physicsBody = ropeSoftBody;//将绳索的软体部分和绘制对象绑定
+                    ropeSoftBody.setActivationState( 4 );//防止冻结绳索
+                    var influence = 1;
+                    ropeSoftBody.appendAnchor( 0, ball.userData.physicsBody, true, influence );//将绳索和小球相连
+                    ropeSoftBody.appendAnchor( ropeNumSegments, start_point.userData.physicsBody, true, influence );//将绳索和正方体相连
+
+                }
+
+                function createParalellepiped( sx, sy, sz, mass, pos, quat, material ) {
+
+                    var threeObject = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+                    var shape = new Ammo.btBoxShape( new Ammo.btVector3( sx * 0.5, sy * 0.5, sz * 0.5 ) );
+                    shape.setMargin( margin );
+                    createRigidBody( threeObject, shape, mass, pos, quat );
+                    return threeObject;
+
+                }
+
+                function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
+                    threeObject.position.copy( pos );
+                    threeObject.quaternion.copy( quat );
+                    var transform = new Ammo.btTransform();
+                    transform.setIdentity();
+                    transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+                    transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+                    var motionState = new Ammo.btDefaultMotionState( transform );
+                    var localInertia = new Ammo.btVector3( 0, 0, 0 );
+                    physicsShape.calculateLocalInertia( mass, localInertia );
+                    var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
+                    var body = new Ammo.btRigidBody( rbInfo );
+                    threeObject.userData.physicsBody = body;
+                    scene.add( threeObject );
+                    if ( mass > 0 ) {
+                        rigidBodies.push( threeObject );
+                        // Disable deactivation
+                        body.setActivationState( 4 );
+                    }
+                    physicsWorld.addRigidBody( body );
+                }
+
+                function createRandomColor() {
+                    return Math.floor( Math.random() * ( 1 << 24 ) );
+                }
+
+                function createMaterial() {
+                    return new THREE.MeshPhongMaterial( { color: createRandomColor() } );
+                }
+
+
+
+                function onWindowResize() {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+                }
+
+                function animate(){
+                    requestAnimationFrame( animate );
+                    render();
+                }
+
+                function render(){
+                    var deltaTime = clock.getDelta();
+                    updatePhysics( deltaTime );
+                    controls.update( deltaTime );
+                    renderer.render( scene, camera );
+                    time += deltaTime;
+                }
+
+                function updatePhysics( deltaTime ) {
+                    // Step world
+                    physicsWorld.stepSimulation( deltaTime, 10 );
+                    // Update rope
+                    var softBody = rope.userData.physicsBody;
+                    var ropePositions = rope.geometry.attributes.position.array;
+                    var numVerts = ropePositions.length / 3;
+                    var nodes = softBody.get_m_nodes();
+                    var indexFloat = 0;
+                    for ( var i = 0; i < numVerts; i ++ ) {
+
+                        var node = nodes.at( i );
+                        var nodePos = node.get_m_x();
+                        ropePositions[ indexFloat++ ] = nodePos.x();
+                        ropePositions[ indexFloat++ ] = nodePos.y();
+                        ropePositions[ indexFloat++ ] = nodePos.z();
+                    }
+                    rope.geometry.attributes.position.needsUpdate = true;
+
+                    // Update rigid bodies
+                    for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {
+                        var objThree = rigidBodies[ i ];
+                        var objPhys = objThree.userData.physicsBody;
+                        var ms = objPhys.getMotionState();
+                        if ( ms ) {
+
+                            ms.getWorldTransform( transformAux1 );
+                            var p = transformAux1.getOrigin();
+                            var q = transformAux1.getRotation();
+                            objThree.position.set( p.x(), p.y(), p.z() );
+                            objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+                        }
+                    }
+                }
+                document.onmousedown=function(event)
+                {
+                    ball.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(10,0,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+                };
+            })
+        </script>
+
+    </body>
+</html>

@@ -1,0 +1,86 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sample1_11</title>
+<style type="text/css">
+div{float:left;}
+</style>
+</head>
+<body>
+<div>
+<p>接下来我们来看一下如何向表格与单元格内部添加背景颜色或者背景图片：</p>
+<h4>为表格添加背景颜色：</h4>
+<table border="1" bgcolor="red">
+<tr><td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+<h4>为表格单元格添加背景颜色：</h4>  
+<table border="1"><tr>
+  <td bgcolor="red">100</td><td>200</td>
+</tr><tr>
+  <td bgcolor="blue">300</td><td>400</td>
+</tr></table>
+<p>现在我们来看一下用align属性在单元格中排列内容</p>
+<table width="400" border="1"><tr>
+  <th align="left">消费项目</th>
+  <th align="right">一月</th>
+  <th align="right">二月</th>
+ </tr><tr>
+  <td align="left">衣服</td>
+  <td align="right">$100</td>
+  <td align="right">$200</td>
+ </tr><tr>
+  <td align="left">化妆品</td>
+  <td align="right">$100</td>
+  <td align="right">$150</td>
+ </tr><tr>
+  <td align="left">食物</td>
+  <td align="right">$500</td>
+  <td align="right">$600</td>
+ </tr><tr>
+  <th align="left">总计</th>
+  <th align="right">$700</th>
+  <th align="right">$950</th>
+ </tr></table>
+ </div>
+ <!--align属性规定单元格内容的水平对齐方式。其值除了left、right之外还有center居中对齐、
+ justify对行进行伸展，这样每行都可以有相等的长度，char将内容对准指定字符。-->
+ <div>
+ <p>接下来我们来演示如何使用“frame”属性来控制围绕表格的边框：</p>
+<p>表格的frame属性为box：</p>
+<table frame="border"><tr>
+    <th>月份</th><th>消费</th>
+  </tr><tr>
+    <td>一月</td><td>$100</td>
+  </tr></table>
+<p>表格的frame属性为above：</p>
+<table frame="above"><tr>
+    <th>月份</th><th>消费</th>
+  </tr><tr>
+    <td>一月</td><td>$100</td>
+  </tr></table>
+<p>表格的frame属性为below:</p>
+<table frame="below"><tr>
+    <th>月份</th><th>消费</th>
+  </tr><tr>
+    <td>一月</td><td>$100</td>
+  </tr></table>
+<p>表格的frame属性为hsides:</p>
+<table frame="hsides"><tr>
+    <th>月份</th><th>消费</th>
+  </tr><tr>
+    <td>一月</td><td>$100</td>
+  </tr></table>
+<p>表格的frame属性为vsides：</p>
+<table frame="vsides"><tr>
+    <th>月份</th><th>消费</th>
+  </tr><tr>
+    <td>一月</td><td>$100</td>
+  </tr></table>
+<!--frame 属性无法在 Internet Explorer 中正确地显示。除了以上示意的五个值之外还有void不显
+示外边框、lhs显示左边的外侧边框、rhs显示右边的外侧边框、border在所有边上显示外边框。不过
+从实用角度出发，最好不要规定 frame，而是使用 CSS 来添加边框样式。-->
+</div>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>粒子动画-蒸汽</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            // 从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            // 加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+            var createScene = function() {
+                var scene = new BABYLON.Scene(engine); // 创建场景
+                scene.clearColor = new BABYLON.Color3(0.0, 0.0, 0.0) // 场景颜色
+                var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 0.8, 5, new BABYLON.Vector3(
+                    0, 0, 0), scene); //创建摄像机
+                camera.attachControl(canvas, true); // 相机监听
+
+                var light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(0, 3, 3), scene); //点光源
+                var ambient = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene); //半球形光
+                ambient.intensity = 0.9; // 灯光强度
+
+                // 锥形粒子发射器
+                var emitter = new BABYLON.ConeParticleEmitter();
+                //emitter.position = new BABYLON.Vector3(0.0, 0.6, 0.0);
+
+                //var fountain = new BABYLON.Mesh.CreateBox("fountain", 0.01, scene);
+
+                // 创建小圆柱体
+                var fountain = new BABYLON.MeshBuilder.CreateCylinder("fountain", {
+                    height: 0.01, //高度
+                    diameter: 0.2 //直径
+                }, scene);
+                fountain.position.y = 0.5;
+                var child = new BABYLON.TransformNode();
+                child.parent = fountain; //获取或设置节点的父节点
+                child.position.y = 0.5;
+
+                // 创建大圆柱体
+                var cup = new BABYLON.MeshBuilder.CreateCylinder("cup", {
+                    height: 1,
+                    diameter: 0.9
+                }, scene);
+
+                // 创建标准材质
+                var cupMat = new BABYLON.StandardMaterial("coreMat", scene)
+                cupMat.diffuseColor = new BABYLON.Color3(0.3773, 0.0930, 0.0266); //设置颜色
+
+                // 将材质应用到圆柱体
+                fountain.material = cupMat;
+                cup.material = cupMat
+
+                // 创建粒子系统
+                // 启用动画粒子，请在ParticleSystem构造函数中传递第五个布尔参数，其值为true（第四个GPUParticleSystem）。此参数的默认值为false。
+                var particleSystem = new BABYLON.ParticleSystem("particles", 30, scene, null, true);
+
+                // 加载纹理套图
+                particleSystem.particleTexture = new BABYLON.Texture("pic/fog.png", scene, true,
+                    false, BABYLON.Texture.TRILINEAR_SAMPLINGMODE);
+
+                // 粒子动画播放
+                // spriteCellHeight和spriteCellWidth是可用于在动画片每个精灵小区宽度和高度。
+                // startSpriteCellID与endSpriteCellID基于对动漫片精灵的细胞位置设定，最顶端，最左边的精灵在单元0您从顶行向下从左到右计数。
+                particleSystem.startSpriteCellID = 0; //从纹理套图第一帧开始
+                particleSystem.endSpriteCellID = 31; //从纹理套图最后一帧结束
+                particleSystem.spriteCellHeight = 256; //纹理套图每一帧高度
+                particleSystem.spriteCellWidth = 128; //纹理套图每一帧宽度
+                particleSystem.spriteCellChangeSpeed = 4; //动画循环的速度（默认值为1，意味着动画将在整个粒子生命周期中播放一次）
+
+                // 粒子尺寸缩放
+                particleSystem.minScaleX = 1.0;
+                particleSystem.minScaleY = 2.0;
+                particleSystem.maxScaleX = 1.0;
+                particleSystem.maxScaleY = 2.0;
+
+                // 设置粒子尺寸渐变
+                particleSystem.addSizeGradient(0, 0.0, 0.0);
+                particleSystem.addSizeGradient(1.0, 1, 1);
+
+                // 设置粒子枢轴，粒子缩放位置，默认是粒子中心
+                particleSystem.translationPivot = new BABYLON.Vector2(0, -0.5);
+
+                // 创建锥形发射器
+                var radius = 0.4;
+                var angle = Math.PI;
+                var coneEmitter = new BABYLON.ConeParticleEmitter(radius, angle);
+
+                particleSystem.particleEmitterType = coneEmitter; //粒子发射器类型
+                particleSystem.emitter = child; //粒子发射器为圆柱
+
+                // 粒子生命周期
+                particleSystem.minLifeTime = 4.0;
+                particleSystem.maxLifeTime = 4.0;
+
+                // 粒子渐变颜色
+                particleSystem.addColorGradient(0, new BABYLON.Color4(1, 1, 1, 0));
+                particleSystem.addColorGradient(0.5, new BABYLON.Color4(1, 1, 1, 70 / 255));
+                particleSystem.addColorGradient(1.0, new BABYLON.Color4(1, 1, 1, 0));
+
+                // 发射速率，每帧发射最大粒子数
+                particleSystem.emitRate = 6;
+
+                // 混合模式 : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+                particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+
+                // 设置粒子重力
+                particleSystem.gravity = new BABYLON.Vector3(0, 0, 0);
+
+                // 发射功率
+                particleSystem.minEmitPower = 0;
+                particleSystem.maxEmitPower = 0;
+                particleSystem.updateSpeed = 1 / 60; //更新速度，整体运动速度（0.01是默认更新速度，更快更新=更快动画）
+
+                // 启动粒子系统
+                particleSystem.start();
+
+                return scene;
+
+            };
+
+            var scene = createScene();
+            //新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                scene.render();
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

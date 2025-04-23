@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample11_1</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机位置
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0xffffff));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        var axes = new THREE.AxesHelper(6);//新建坐标辅助对象
+        scene.add(axes);//将坐标辅助对象添加到场景中
+        var sphereGeometry = new THREE.SphereGeometry(4, 20, 20);//创建球体的几何体
+        var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x000000, wireframe: true});//创建基本材质
+        var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.x = 0;//设置球体的位置
+        sphere.position.y = 0;
+        sphere.position.z = 0;
+        scene.add(sphere);//将球体添加到场景中
+        camera.position.x = 10;//设置摄像机位置
+        camera.position.y = 10;
+        camera.position.z = 10;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();
+		function renderScene() {
+            sphere.rotation.y += 0.02;
+            requestAnimationFrame(renderScene);
+            renderer.render(scene, camera);
+        }
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

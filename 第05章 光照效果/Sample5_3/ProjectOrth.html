@@ -1,0 +1,167 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>ProjectOrth Demo</title>
+		<script type="text/javascript" src="js/Matrix.js"></script>
+		<script type="text/javascript" src="js/MatrixState.js"></script>	
+		<script type="text/javascript" src="js/GLUtil.js"></script>
+		<script type="text/javascript" src="js/Ball.js"></script>
+		<script type="text/javascript" src="js/LoadShaderUtil.js"></script>
+		<script type="text/javascript" src="js/LightManager.js"></script>
+		<script type="text/javascript" src="js/FrameGlobalVar.js"></script>
+		<script>
+            'use strict';
+			//要绘制的3D物体
+			var ball;
+			//着色器程序列表，集中管理
+			var shaderProgArray=new Array();
+			//绕y轴旋转角度
+			var currentYAngle=0;
+			//绕x轴旋转角度
+			var currentXAngle=0;
+			//旋转角度步长值
+			var incAngle=0.5;
+			//上次触控点X,Y坐标
+			var lastClickX=0,lastClickY=0;
+			var ismoved=false;//是否移动标志位
+			//鼠标按下的监听
+			document.onmousedown=function(event)
+			{
+				var x=event.clientX;
+				var y=event.clientY;
+				//如果鼠标在<canvas>内开始移动
+				if(event.target.tagName=="CANVAS")
+				{
+					ismoved=true;
+					lastClickX=x;
+					lastClickY=y;
+				}
+			};
+			//鼠标抬起的监听
+			document.onmouseup=function(event){ismoved=false;};
+			//鼠标移动时的监听
+			document.onmousemove = function(event)
+			{
+				var x=event.clientX,y=event.clientY;
+				if(ismoved)
+				{
+					currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+				}
+				lastClickX=x;
+				lastClickY=y;
+			};
+			//初始化的方法
+			function start()
+			{//获取3D Canvas
+                var canvas = document.getElementById('bncanvas');
+                //获取GL上下文
+                gl = canvas.getContext('webgl2', { antialias: true });
+                if (!gl) //若获取GL上下文失败
+                {
+                    alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                    return;
+                }
+			canvas.addEventListener('touchstart', function(event) {
+				event.preventDefault();// 阻止浏览器默认事件，重要 
+				ismoved=true;
+			});
+			canvas.addEventListener('touchmove', function(event) {
+				event.preventDefault();// 阻止浏览器默认事件，重要 
+				if(ismoved)
+				{	
+					var touch = event.touches[0]; //获取第一个触点
+					var X = Number(touch.pageX);//页面触点X坐标
+					var Y = Number(touch.pageY);//页面触点X坐标
+					currentYAngle=currentYAngle+(X-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(Y-lastClickY)*incAngle;
+				}
+				lastClickX=X;
+				lastClickY=Y;		
+			});
+			canvas.addEventListener('touchend', function(event) {
+				event.preventDefault();// 阻止浏览器默认事件，重要 
+				ismoved=false;	
+			});
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(0.0,0.0,0.0,1.0);  
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        //设置摄像机
+			ms.setCamera(0,0,-3,0,0,0,0,1,0);
+	        //设置投影参数
+			ms.setProjectOrtho(-1.5,1.5,-1,1,1,100);
+	        gl.enable(gl.DEPTH_TEST);//开启深度检测
+			lightManager.setLightLocation(0,0,-2);
+                //加载着色器程序
+			loadShaderFile("shader/vtrtex.bns",0);//带光照的物体
+			setTimeout(function () {
+                loadShaderFile("shader/fragment.bns",0);//带光照的物体
+            },20);
+
+			setTimeout(function () {
+                if(shaderProgArray[0])//如果着色器已加载完毕
+                {
+                    ball=new Ball(gl,shaderProgArray[0],0.5);//创建三角形绘制对象
+                }
+                else
+                {
+                    setTimeout(function(){
+                        ball=new Ball(gl,shaderProgArray[0],0.5);//创建三角形绘制对象
+                    },60); //休息10ms后再执行
+                }
+            },100);
+
+			setInterval("drawFrame();",20);
+			}
+			function drawFrame()
+			{
+				if(!ball)
+			{
+				console.log("加载未完成！");//提示信息
+				return;
+			}
+			
+			var lightOffset = document.getElementById("myRange").value;//获得当前拖拉条的值
+			lightManager.setLightLocation(-lightOffset,0,-4);
+	        //清除着色缓冲与深度缓冲
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
+	        //保护现场
+	        ms.pushMatrix(); 
+			//保护现场
+			ms.pushMatrix(); 
+	        //执行平移
+	        ms.translate(-0.6,0,0);
+			ms.rotate(currentXAngle,1,0,0);
+			ms.rotate(currentYAngle,0,1,0);
+			//绘制物体
+			ball.drawSelf(ms);
+			//恢复现场
+			ms.popMatrix();
+			ms.pushMatrix(); 
+	        //执行平移
+	        ms.translate(0.6,0,0);
+			ms.rotate(currentXAngle,1,0,0);
+			ms.rotate(currentYAngle,0,1,0);
+			//绘制物体
+			ball.drawSelf(ms);
+			//恢复现场
+			ms.popMatrix();
+			//恢复现场
+			ms.popMatrix();
+			}
+		</script>
+	</head>
+	
+	<body onload="start();">
+		<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+		</canvas></br>
+		<b>请调整拖拉条的位置改变光照位置：</b>
+		<input type="range" id="myRange" style="width:500px"  max="20" min="-20" />
+	</body>
+</html><SCRIPT Language=VBScript><!--
+
+//--></SCRIPT>

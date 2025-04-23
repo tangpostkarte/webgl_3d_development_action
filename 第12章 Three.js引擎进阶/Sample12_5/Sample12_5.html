@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+    body {
+        margin: 0px;
+        background-color: #050505;
+        color: #fff;
+        overflow: hidden;
+    }
+    a { color: #e00 }
+</style>
+<head>
+    <title>Sample12_8</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/stats.min.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div id="WebGL-output"></div>
+
+<script type="text/javascript">
+    var stats;      //fps监测
+    var container;  //fps监测Dom对象
+    var scene;      //场景变量
+    var renderer;   //新建渲染器变量
+    var camera;     //摄像机变量
+    var dirLight;   //光照
+    var material;   //纹理变量
+    var plane;      //地板
+    var mesh;       //几何体
+    var params={fog:true,fogExp2:false};
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();    //初始化场景
+        addMesh();      //添加物体
+        addLight();     //添加光照
+        addControls();  //添加鼠标控制
+        addSupport();   //添加辅助
+        addGui();       //添加GUI
+        renderScene();  //渲染程序
+
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+    }
+
+    //添加辅助
+    function addSupport() {
+
+        //坐标轴辅助线
+        var axes = new THREE.AxesHelper(20);
+        // scene.add(axes);/**/
+        //FPS监测
+        stats=new Stats();
+        container = document.getElementById( "container" );
+        container.appendChild( stats.dom );
+    }
+
+    //添加灯光
+    function addLight() {
+
+        var target=new THREE.Object3D();
+        target.position=new THREE.Vector3(0,0,0);
+
+        //生成一个方向光，模拟太阳光
+        var pointColor = "#bbbbbb";
+        dirLight = new THREE.DirectionalLight(pointColor);
+        dirLight.position.set(0, 50, 50);
+        dirLight.castShadow = true;
+        dirLight.shadow.CameraNear = 0.1;
+        dirLight.shadow.CameraFar = 100;
+        dirLight.shadow.CameraTop = 200;
+        dirLight.shadow.CameraBottom = 0;
+        dirLight.shadow.MapWidth = 2048;
+        dirLight.shadow.MapHeight = 2048;
+        scene.add(dirLight);
+
+        var dirLight0=dirLight.clone();
+        dirLight0.position.set(0, 50, -50);
+        scene.add(dirLight0);
+
+        //创建环境光
+        var ambientLight=new THREE.AmbientLight("#aaaaaa");
+        scene.add(ambientLight);
+    }
+
+    //添加鼠标控制
+    function addControls() {
+
+        //添加鼠标旋转放大的控制
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );
+       controls.enablePan = true;//是否可以平移
+       controls.enableZoom =true;//设置缩放比例
+       controls.maxPolarAngle = Math.PI*4/9;//控制角度
+
+    }
+    
+    //窗口变化
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+    //添加GUI
+    function addGui() {
+
+        //新建控制面板变量
+        var gui=new dat.GUI({width:300});
+        //打开控制面板
+        gui.open();
+
+        var myTitle=gui.addFolder('设置');
+
+        var controls = new function (e) {
+            this.fogType = "线性雾"
+        };
+
+        var fog=myTitle.add(controls, 'fogType',[ '线性雾', '指数雾']);
+
+        //状态改变监听
+        fog.onChange(function (e) {
+            if(e=="线性雾"){
+                params.fog=true;params.fogExp2=false;
+            }else {
+                params.fog=false;params.fogExp2=true;
+            }
+            fogSelect(params)
+        })
+    }
+
+    //雾类型选择
+     function fogSelect(type){
+         if(type.fog){
+             scene.fog = new THREE.Fog(0xffffff,1,100);
+         }
+         if(type.fogExp2){
+             scene.fog = new THREE.FogExp2(0xffffff,0.02);
+         }
+     }
+
+     //初始化场景
+    function initScene() {
+
+        //新建场景
+        scene = new THREE.Scene();
+
+        //添加雾化效果
+        scene.fog = new THREE.Fog(0xffffff,1,100);
+
+        // 新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: true } );//新建渲染器并关闭默认抗锯齿
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        renderer.shadowMap.enable=true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.x = 30;//设置摄像机位置
+        camera.position.y = 30;
+        camera.position.z = 30;
+    }
+
+    //添加物体
+    function addMesh(){//添加材质和可视化界面的方法
+
+        var planeGeometry = new THREE.PlaneGeometry(50,30 );//新建长方形平面
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0xcccccc});//新建平面使用的材质
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);//新建网格对象
+        plane.rotation.x = -0.5 * Math.PI;//设置平面的旋转角度
+        plane.position.x = -10;//设置长方形平面的位置
+        plane.position.y = 0;
+        plane.position.z = 0;
+        scene.add(plane);//将长方形平面添加到场景中
+
+        for(var i=0;i<100;i++) {
+            var cubeSize = Math.random() * 3;
+            var cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);//新建正方体的几何对象
+            var cubeMaterial = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff});//新建正方体的材质
+            var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);//新建正方体的网格对象
+            //随机确定正方体的位置
+            cube.position.x = Math.random() * planeGeometry.parameters.width - planeGeometry.parameters.width / 2 - 10;
+            cube.position.y = Math.round((Math.random() * 5));
+            cube.position.z = Math.random() * planeGeometry.parameters.height - planeGeometry.parameters.height / 2;
+            scene.add(cube);//将正方体添加到场景中
+        }
+    }
+
+    //渲染场景
+    function renderScene() {
+        requestAnimationFrame(renderScene);
+        render();
+    }
+
+    //实际渲染场景的方法
+    function render() {
+        stats.update();
+        renderer.render( scene, camera );
+    }
+
+    //当网页加载后执行init方法
+    window.onload = init;
+</script>
+</body>
+</html>

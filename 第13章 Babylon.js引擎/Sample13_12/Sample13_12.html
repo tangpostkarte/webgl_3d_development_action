@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+    <!-- Babylon.js -->
+    <script src="bulid/babylon.custom.js"></script>
+    <style>
+
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        
+        #fpsLabel {
+            position: absolute;
+            left: 100px;
+            top: 20px;
+            cursor: default;
+            z-index:10;
+            background-color: #7283a0;
+            color:white;
+            padding:5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+            }
+
+        #versionLabel{
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: default;
+            z-index:10;
+            background-color: #7283a0;
+            color:white;
+            padding:5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <span  id="fpsLabel">FPS</span>
+    <span  id="versionLabel">Version</span>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        if (BABYLON.Engine.isSupported()) {
+
+            //获取Canvas Dom对象
+            var canvas = document.getElementById("renderCanvas");
+            //获取BABYLON引擎对象
+            var engine = new BABYLON.Engine(canvas, true);
+            //Label标签显示WebGL版本
+            document.getElementById("versionLabel").innerHTML=`&nbspVersion&nbsp<br>WebGL `+engine.webGLVersion;
+            //创建场景方法
+            var createScene = function() {
+
+                //创建场景
+                var scene = new BABYLON.Scene(engine);
+
+                //创建摄像机
+                var camera = new BABYLON.ArcRotateCamera("Camera", 0, Math.PI / 2, 12, BABYLON.Vector3.Zero(), scene);
+
+                //设置摄像机的控制
+                camera.attachControl(canvas, false);
+
+                //顶点着色器
+                BABYLON.Effect.ShadersStore["customVertexShader"]=
+
+                "in vec3 position;\r\n"+
+                "in vec3 normal;\r\n"+
+
+                "uniform mat4 worldViewProjection;\r\n"+
+
+                "out vec4 vPosition;\r\n"+
+                "out vec3 vNormal;\r\n"+
+
+                "void main() {\r\n"+
+
+                "    vec4 p = vec4( position, 1. );\r\n"+
+
+                "    vPosition = p;\r\n"+
+                "    vNormal = normal;\r\n"+
+
+                "    gl_Position = worldViewProjection * p;\r\n"+
+
+                "}\r\n";
+
+                //片元着色器
+                BABYLON.Effect.ShadersStore["customFragmentShader"]=
+
+                "precision highp float;\r\n"+
+
+                "uniform mat4 worldView;\r\n"+
+
+                "in vec4 vPosition;\r\n"+
+
+                "in vec3 vNormal;\r\n"+
+
+                "uniform sampler2D refSampler;\r\n"+
+
+                "void main() {\r\n"+
+
+                "    vec3 e = normalize( vec3( worldView * vPosition ) );\r\n"+
+                "    vec3 n = normalize( worldView * vec4(vNormal, 0.0) ).xyz;\r\n"+
+
+                "    vec3 r = reflect( e, n );\r\n"+
+                "    float m = 2. * sqrt(\r\n"+
+                "        pow( r.x, 2. ) +\r\n"+
+                "        pow( r.y, 2. ) +\r\n"+
+                "        pow( r.z + 1., 2. )\r\n"+
+                "    );\r\n"+
+                "    vec2 vN = r.xy / m + .5;\r\n"+
+
+                "    vec3 base = texture2D( refSampler, vN).rgb;\r\n"+
+
+                "    glFragColor = vec4( base, 1. );\r\n"+
+                "}\r\n";
+
+
+                //将着色器材质
+                var shaderMaterial = new BABYLON.ShaderMaterial("shader", scene, {
+                    vertex: "custom",
+                    fragment: "custom",
+                }, {
+                        attributes: ["position", "normal"],
+                        uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+                    });
+
+
+                //反射纹理
+                var refTexture = new BABYLON.Texture("textures/ref.jpg", scene);
+                //设置U轴纹理采样方式
+                refTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+                //设置V轴纹理采样方式
+                refTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+                refTexture.DEFAULT_ANISOTROPIC_FILTERING_LEVEL
+                console.log(refTexture)
+
+                //将纹理送入着色器
+                shaderMaterial.setTexture("refSampler", refTexture);
+                //材质关闭背面剪裁
+                shaderMaterial.backFaceCulling = false;
+
+                //创建圆环结
+                var mesh = BABYLON.Mesh.CreateTorusKnot("mesh", 2, 0.5, 128, 64, 2, 3, scene);
+                //设置圆环结的材质为着色器材质
+                mesh.material = shaderMaterial;
+
+                //旋转角度
+                var angle=0;
+                scene.onBeforeRenderObservable.add(()=>{
+                    angle=angle+0.01;
+                    //修改圆环结的旋转角度
+                    mesh.rotation.set(0,angle,0);
+                })
+
+                //返回场景
+                return scene;
+            }
+
+            //新建场景
+            var scene = createScene();
+
+            //获取fbs标签Dom对象
+            var fpsLabel=document.getElementById('fpsLabel');
+
+            engine.runRenderLoop(function () {
+                fpsLabel.innerHTML=`&nbspFPS&nbsp<br>&nbsp${Math.floor(engine.getFps())}`; 
+                scene.render();
+            });
+
+            window.addEventListener("resize", function () {
+
+                engine.resize();
+
+            });
+        }
+    </script>
+</body>
+</html>

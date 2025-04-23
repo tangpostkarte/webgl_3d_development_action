@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+    body {
+        margin: 0px;
+        background-color: #050505;
+        color: #fff;
+        overflow: hidden;
+    }
+    a { color: #e00 }
+</style>
+<head>
+    <title>真实的水面效果</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/stats.min.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <script type="text/javascript" src="util/Water2.js"></script>
+    <script type="text/javascript" src="util/Refractor.js"></script>
+    <script type="text/javascript" src="util/Reflector.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div id="WebGL-output"></div>
+<script type="text/javascript">
+
+    var stats;          //FPS状态监测
+    var container;      //渲染容器
+    var water;          //水面
+    var scene;          //场景变量
+    var renderer;       //新建渲染器变量
+    var camera;         //摄像机变量
+    var dirLight;       //光照
+    var sphere;         //球体
+    var sphereAngle=0;  //球运动角度
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();    //初始化场景
+        addMesh();      //添加物体
+        setSkybox();
+        addLight();     //添加光源
+        addControls();  //添加鼠标控制
+        addSupport();   //添加帮助
+        renderScene();  //渲染场景
+
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );
+
+    }
+
+    //添加帮助
+    function addSupport() {
+        stats=new Stats();
+        container.appendChild( stats.dom );
+    }
+
+    //添加光源
+    function addLight() {
+
+        var target=new THREE.Object3D();
+        target.position=new THREE.Vector3(0,0,0);
+
+        //生成一个方向光，模拟太阳光
+        var pointColor = "#bbbbbb";
+        dirLight = new THREE.DirectionalLight(pointColor);
+        dirLight.position.set(0, 50, 50);
+        dirLight.castShadow = true;
+
+        dirLight.shadow.CameraNear = 0.1;
+        dirLight.shadow.CameraFar = 100;
+        dirLight.shadow.CameraTop = 200;
+        dirLight.shadow.CameraBottom = 0;
+        dirLight.shadow.MapWidth = 2048;
+        dirLight.shadow.MapHeight = 2048;
+
+        var dirLight0=dirLight.clone();
+        dirLight0.position.set(0, 50, -50);
+        scene.add(dirLight0);
+        scene.add(dirLight);
+
+        var ambientLight=new THREE.AmbientLight("#ffffff");//创建环境光
+        scene.add(ambientLight);
+    }
+
+    //添加鼠标控制
+    function addControls() {
+
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+
+        controls.enablePan = true;//是否可以平移
+        controls.enableZoom =true;//设置缩放比例
+        controls.maxPolarAngle = Math.PI*4/9;//控制角度
+    }
+
+    //窗口变化监听
+    function onWindowResize() {
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+    //初始化场景
+    function initScene() {
+
+        scene = new THREE.Scene();//新建场景
+
+        //新建渲染器
+        container = document.getElementById( "container" );
+        renderer = new THREE.WebGLRenderer({ antialias: true } );   //新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x979797));          //设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);    //设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(8,3,0);
+        camera.lookAt( scene.position );
+    }
+
+    //添加材质和可视化界面的方法
+    function addMesh(){
+
+        //创建一个二十面体
+        var geometry = new THREE.IcosahedronGeometry(2, 1 );
+        for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
+            //对每个面进行随机指定颜色
+            geometry.faces[ i ].color.setHex( Math.random() * 0xffffff );
+        }
+        //创建材质
+        var material = new THREE.MeshStandardMaterial( {
+            vertexColors: THREE.FaceColors,             //顶点颜色
+            roughness: 0.0,                             //粗糙度
+            flatShading: true,                          //平铺
+        } );
+        //创建网格对象
+        sphere = new THREE.Mesh( geometry, material );
+        scene.add( sphere );
+
+
+
+        //地板几何体
+        var groundGeometry = new THREE.PlaneBufferGeometry( 20, 20);
+        var groundMaterial = new THREE.MeshStandardMaterial( { roughness: 0.8, metalness: 0.4 } );
+        var ground = new THREE.Mesh( groundGeometry, groundMaterial );
+        ground.rotation.x = Math.PI * - 0.5;
+        //加载纹理
+        var textureLoader = new THREE.TextureLoader();
+        textureLoader.load( 'img/teture.png', function( map ) {
+            map.wrapS = THREE.RepeatWrapping;           //S轴的纹理拉伸方式
+            map.wrapT = THREE.RepeatWrapping;           //T轴的纹理拉伸方式
+            map.anisotropy =16;                         //最大各异向程度
+            map.repeat.set( 5, 5 );                     //S轴和Y轴的重复次数
+            groundMaterial.map = map;                   //纹理
+            scene.add( ground );                        //将地板几何体添加进场景
+        } );
+
+
+
+        //水面
+        var waterGeometry = new THREE.PlaneBufferGeometry(20, 20);
+        water = new THREE.Water( waterGeometry, {
+            color: '#ffffff',                           //颜色
+            scale: 0,                                   //纹理尺寸
+            flowDirection: new THREE.Vector2( 4, 4 ),   //流动方向
+            textureWidth: 1024,                         //纹理宽度
+            textureHeight: 1024,                         //纹理高度
+            reflectivity:0.5
+        } );
+        water.position.y =1;
+        water.rotation.x = Math.PI * - 0.5;
+        scene.add( water );
+    }
+
+    //添加天空盒
+    function setSkybox() {
+
+        //立方体纹理加载
+        var cubeTextureLoader = new THREE.CubeTextureLoader();
+        cubeTextureLoader.setPath( 'img/' );
+        var cubeMap = cubeTextureLoader.load( [
+            'skycubemap_left.jpg', 'skycubemap_right.jpg',          //左面 右面
+            'skycubemap_up.jpg', 'skycubemap_down.jpg',             //上面  下面
+            'skycubemap_back.jpg', 'skycubemap_front.jpg',          //后面  前面
+        ] );
+
+        //自带立方体着色器
+        var cubeShader = THREE.ShaderLib[ 'cube' ];         //传入纹理图片
+        cubeShader.uniforms[ 'tCube' ].value = cubeMap;
+
+        //着色器材质
+        var skyBoxMaterial = new THREE.ShaderMaterial( {
+            fragmentShader: cubeShader.fragmentShader,
+            vertexShader: cubeShader.vertexShader,
+            uniforms: cubeShader.uniforms,
+            side: THREE.BackSide
+        } );
+
+        //天空盒(正方体)
+        var skyBoxGeometry = new THREE.BoxBufferGeometry(500, 500, 500);
+
+        //创建天空盒
+        var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
+
+        //添加进场景
+        scene.add( skyBox );
+    }
+
+    //渲染场景
+    function renderScene() {
+        requestAnimationFrame(renderScene);
+        render();
+    }
+
+    //实际渲染的方法
+    function render() {
+
+        //球运动，改变Y坐标
+        sphere.position.y=2+3*Math.cos(sphereAngle);
+        sphereAngle+=0.02;
+        //FPS更新
+        stats.update();
+        //渲染
+        renderer.render( scene, camera );
+    }
+
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

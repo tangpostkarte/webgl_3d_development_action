@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>固体粒子</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        
+        #fpsLabel {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: default;
+            z-index: 10;
+            background-color: #7283a0;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        #fpsText {
+            position: absolute;
+            left: 10px;
+            top: 50px;
+            cursor: default;
+            z-index: 10;
+            background-color: #7283a0;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            // 从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            // 加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+            var createScene = function() {
+                // 创建场景
+                var scene = new BABYLON.Scene(engine);
+                //scene.clearColor = BABYLON.Color3.Black;
+
+                // 创建相机
+                var camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 0, new BABYLON.Vector3(0, 0, -0), scene);
+                camera.setPosition(new BABYLON.Vector3(0, 10, -50)); // 相机位置
+                camera.attachControl(canvas, true); // 相机监听
+                /*
+                var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 0, 0), scene);
+                light.intensity = 0.85;
+                light.specular = new BABYLON.Color3(0.95, 0.95, 0.81);
+                */
+                var pl = new BABYLON.PointLight("pl", new BABYLON.Vector3(0, 0, 0), scene); // 创建点光源
+                pl.diffuse = new BABYLON.Color3(1, 1, 1); // 漫反射颜色
+                pl.intensity = 1.0; // 灯光强度
+
+                var nb = 20000; // 三角形数量
+                var fact = 30; // 粒子构成正方体大小
+
+                // SPS创建的自定义位置函数 
+                var myPositionFunction = function(particle, i, s) {
+                    particle.position.x = (Math.random() - 0.5) * fact;
+                    particle.position.y = (Math.random() - 0.5) * fact;
+                    particle.position.z = (Math.random() - 0.5) * fact;
+                    particle.rotation.x = Math.random() * 3.15;
+                    particle.rotation.y = Math.random() * 3.15;
+                    particle.rotation.z = Math.random() * 1.5;
+                    particle.color = new BABYLON.Color4(particle.position.x / fact + 0.5, particle.position.y /
+                        fact + 0.5, particle.position.z / fact + 0.5, 1.0);
+                };
+
+                // 固体粒子模型：三角形
+                // 创建多边形-三角形
+                var triangle = BABYLON.MeshBuilder.CreateDisc("t", {
+                    tessellation: 3 //tessellation设置多边形边数（正整数，默认为64）
+                }, scene);
+
+                // 创建SPS固体粒子系统
+                var SPS = new BABYLON.SolidParticleSystem('SPS', scene);
+                SPS.addShape(triangle, nb); // 添加模型三角形
+                // 构建SPS底层网格。返回标准网格。如果没有向SPS添加模型形状，返回的网格只是一个三角形平面。 
+                var mesh = SPS.buildMesh(); // 获取SPS网格 
+                // 释放模型三角形
+                triangle.dispose();
+
+                // SPS 初始化函数
+                // var particles: SolidParticles[] = [array of SolidParticle objects];
+                SPS.initParticles = function() {
+                    for (var p = 0; p < SPS.nbParticles; p++) { //遍历SPS所有粒子
+                        myPositionFunction(SPS.particles[p]); // 初始化每个粒子属性
+                    }
+                }
+
+                // SPS 粒子更新函数
+                SPS.updateParticle = function(particle) {
+                    particle.rotation.x += particle.position.z / 100; //粒子绕x轴旋转
+                    particle.rotation.z += particle.position.x / 100; //粒子绕y轴旋转
+                }
+
+                SPS.initParticles(); // SPS初始化
+                SPS.setParticles(); // SPS更新，会自动调用updatePartice函数
+
+                // Optimizers after first setParticles() call
+                // will be used only for the next setParticles() calls
+                SPS.computeParticleColor = false; // 禁止粒子颜色属性更新，提高粒子渲染速率
+                SPS.computeParticleTexture = false; // 禁止粒子纹理更新，提高粒子渲染速率
+
+                // SPS mesh animation 在每帧渲染前调用函数
+                scene.registerBeforeRender(function() {
+                    pl.position = camera.position; // 光源位置始终在相机处
+                    SPS.mesh.rotation.y += 0.01; // 整个SPS粒子系统网格绕y轴旋转
+                    SPS.setParticles(); // SPS更新
+                });
+
+                return scene;
+            };
+
+            var scene = createScene();
+            const fpsLabel = document.getElementById('fpsLabel');
+            // 新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                scene.render();
+                // FPS
+                fpsLabel.innerHTML = `&nbspFPS&nbsp<br>&nbsp
+                ${Math.floor(engine.getFps())}`;
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <span class="label" id="fpsLabel">FPS</span>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

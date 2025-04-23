@@ -1,0 +1,70 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Sample1_7</title></head>
+<body>
+<p>这里我们演示img标签及其属性的用法，本标签创建的是被引用图像的占位空间。</p>
+<img src="pic/H5.jpg"  alt="W3C的正式HTML 5徽标" height="128" width="128" />
+<img src="pic/H523.jpg"  alt="W3C的正式HTML 5徽标" height="128" width="160" />
+<!--src和alt为该标签的必需属性，在HTML中img标签没有结束标签，
+第二个img标签为演示如果图像不能显示则显示alt属性。-->
+<p>接下来我们来演示的为设置背景图片，如果图片小于页面那么图片会重复。</p>
+<body background="pic/background1.png">
+<p>接下来我们演示的是设置图像的对齐方式：</p>
+<h2>未设置对齐方式的图像：</h2>
+<p>图像 <img src ="pic/back.png"> 在文本中</p>
+<h2>已设置对齐方式的图像：</h2>
+<p>图像 <img src="pic/back.png" align="bottom"> 在文本中的对齐方式为bottom</p>
+<p>图像 <img src ="pic/back.png" align="middle"> 在文本中的对齐方式为middle</p>
+<p>图像 <img src ="pic/back.png" align="top"> 在文本中的对齐方式为top</p>
+<!--其中bottom对其方式是默认的对齐方式-->
+<p>现在我们把图像作为链接来使用：
+<a href="Sampel1_6.html">
+<img border="0" src="pic/back.png" />
+</a></p>
+<p>现在我们演示的为创建带有可供点击区域的图像地图，其中每个区域都是一个超链接，
+请点击图像上的星球，把它们放大。</p>
+<img src="pic/xingqiu.jpg"
+	border="0" usemap="#planetmap"
+	alt="星球" />
+<map name="planetmap" id="planetmap">
+<area shape="circle"
+	coords="180,139,14"
+	href ="pic/jinxing.png"
+	target ="_blank"
+	alt="金星" />
+<area shape="circle"
+	coords="129,161,10"
+	href ="pic/shuixing.png"
+	target ="_blank"
+	alt="水星" />
+<area shape="rect"
+	coords="0,0,110,260"
+	href ="pic/sun.jpg"
+	target ="_blank"
+	alt="太阳" /></map>
+<!--area标签定义图像映射中的区域，总会嵌套在map中，shape属性定义了区域形状，coords
+为区域的坐标值一般的四个坐标值为定义的矩形的左上角与右下角的坐标值x，y三个值为圆形
+的原点坐标与半径，多边形poly的坐标为x1,y1,x2,y2,..,xn,yn。-->
+<!--img 元素中的 "usemap" 属性引用 map 元素中的 "id" 或 "name" 属性（根据浏览器），
+所以我们同时向 map 元素添加了 "id" 和 "name" 属性。以上几个例子在涉及href属性时
+我们给出的是路径位置，这里也可以给URL。target属性值blank为在新链接中打开。-->
+<p>接下来我们来演示一下无序列表的使用，首先我们看到的是不同类型的无序列表：</p>
+<h4>Disc 项目符号列表：</h4>
+<ul type="disc">
+ <li>苹果</li><li>香蕉</li><li>柠檬</li><li>桔子</li>
+</ul><h4>Circle 项目符号列表：</h4>
+<ul type="circle">
+ <li>苹果</li><li>香蕉</li><li>柠檬</li><li>桔子</li>
+</ul><h4>Square 项目符号列表：</h4>
+<ul type="square">
+ <li>苹果</li><li>香蕉</li><li>柠檬</li><li>桔子</li>
+</ul>  
+<p>下面我们将看到嵌套类型的无序列表：</p>
+<h4>一个嵌套列表：</h4><ul>
+  <li>咖啡</li><li>茶
+    <ul><li>红茶</li><li>绿茶</li></ul>
+  </li><li>牛奶</li></ul>
+  <!--标签li为定义列表项目，常与无序列表标签ul与有序列表标签ol一起使用。-->
+</body>
+</html>

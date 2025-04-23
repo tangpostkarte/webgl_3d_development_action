@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Smaple11_33</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(0x000000, 1.0);//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+        var boxGeometry=new THREE.BoxGeometry(13, 13, 2);//用来控制模型的变量
+        var material = getBumpTextureMaterial("qiang.jpg","qiangat.jpg");//新建材质
+		var model= new THREE.Mesh(boxGeometry,material);
+        model.material=material;
+		model.position.set(7,0,0);
+		model.rotation.y=-0.5;
+		scene.add(model);
+		
+		var material2 = getBumpTextureMaterial("qiang.jpg","qiangat.jpg");//新建材质
+		material2.bumpScale=0;
+		var model2=new THREE.Mesh(boxGeometry,material2);
+		model2.position.set(-7,0,0);
+		model2.rotation.y=0.5;
+		scene.add(model2);
+        //设置摄像机的位置
+        camera.position.x = 0;
+        camera.position.y = 10;
+        camera.position.z = 20;
+        camera.lookAt(new THREE.Vector3(0,0,0));//设置摄像机焦点
+		var light = new THREE.DirectionalLight("#ffffff");
+        light.position.set(0, 10, -20);
+        scene.add(light);
+		
+		var spotLight = new THREE.SpotLight("#ffffff");	//创建聚光灯光源
+		spotLight.position.set(0,10,0);					//设置光源位置
+		scene.add(spotLight);							//将光源添加到场景中
+		var pointLight = new THREE.PointLight("#ffffff");	//创建聚光灯光源
+		pointLight.position.set(0,2,5);					//设置光源位置
+		scene.add(pointLight);							//将光源添加到场景中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        var step = 0;
+        render();
+        function render() {
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+		function getBumpTextureMaterial(imageName,bumpName){//创建带有凹凸贴图的材质
+            var texture = THREE.ImageUtils.loadTexture("textures/" + imageName);//读取纹理贴图的数据
+			var bump = THREE.ImageUtils.loadTexture("textures/" + bumpName);//读取法相贴图的数据
+            var mat = new THREE.MeshPhongMaterial();//新建Phong材质
+            mat.map = texture;//将读取的纹理数据赋值给材质的map属性
+			mat.bumpMap = bump;//将读取的凹凸数据赋值给材质的bump属性
+			mat.bumpScale=0.15;//设置凹凸的高度
+            return mat;//返回网格对象
+        }
+		
+
+
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

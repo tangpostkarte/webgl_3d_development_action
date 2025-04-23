@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sample1_15</title>
+<style type="text/css">
+body {background-image:url(pic/background1.png);
+background-repeat: no-repeat;
+background-attachment:fixed;
+background-position:center;}
+<!--背景图片的重复方式我们设置的为在不设置重复方式。X为在水平方向上重复，
+不加-X或者Y时为水平方向与垂直方向上都重复。no-repeat为不重复只显示一张图片。
+attachment属性设置为fixed才能保证position属性在Firfox与Opera中正常工作。
+设置位置除了规定的几个值之外我们还可以自定与像素值来设置，用两个百分数
+代替center即可。-->
+h1 {background-color: #00ff00}
+h2 {background-color: transparent}
+p.no1{background-color: rgb(250,0,255)}
+p.no2 {background-color: gray; padding: 20px;}
+span.highlight{
+background-color:blue}
+<!--background-color后面跟一个颜色值为设置背景颜色，因为本例设置了背
+景图片所以就没有设置背景颜色，若想设置主体的背景颜色直接将
+background-image改为color即可。若想在具体的某些元素中应用背景，那么直接在
+样式表的相应元素位置下设置background color或者image即可，这里示例了设置背景颜色
+的方式，背景图片与其类似，便不再演示。-->
+</style>
+</head>
+<body>
+<h1>这是标题 1</h1>
+<h2>这是标题 2</h2>
+<p class="no1">这是段落</p>
+<p class="no2">这个段落设置了内边距。</p>
+<p>
+<span class="highlight">这是文本。</span> 这是文本。 这是文本。 这是文本。
+ 这是文本。 这是文本。 这是文本。 这是文本。 这是文本。 这是文本。 这是文本。
+ 这是文本。 这是文本。 这是文本。 这是文本。 这是文本。 这是文本。
+ <span class="highlight">这是文本。</span>
+</p>
+<p>我们这么写代码是为了演示现在这样设置背景图片时，图像不会随页面的其余部分滚动。</p>
+<p>我们除了可以在style部分逐条设置属性之外，还可以这么来设置：其与上面那样设置效果一样，</br>
+但是不容易分辨。background： #ff0000 url(pic/background1.png) no-repeat fixed center</p>
+<p>这里我们来介绍一下CSS背景中的属性：</p>
+<p>background为简写属性，作用是将背景属性设置在一个声明中。</p>
+<p>background-attachment用于设置背景图片是否固定或随页面其余部分移动，</br>
+除了上面我们写的fixed之外，还有scroll，为默认值，表示图像会随着页面移动。
+inherit规定应该从父元素继承本属性的设置。</p>
+<p>background-color用于设置背景颜色。</p>
+<p>background-image用于设置背景图片。</p>
+<p>background-position用于设置图片的起始位置。</p>
+<p>设置起始位置的值时，不论用固定的几个值还是自定义的%或者像素</p>
+<p>都为两个值，如果我们只规定了一个值，那么第二个值默认会为50%或者center</p>
+<p>top、bottom、center会与left、right、center搭配。</p>
+<p>background-repeat用于设置背景图片的重复方式。</p>
+<p>其取值有no-repeat表示不重复，repeat-x表示水平方向重复，</p>
+<p>repeat-y表示垂直方向重复，repeat为默认值，表示水平方向与垂直方向都重复。</p>
+<p>inherit为继承父元素本属性的值。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+<p>图像不会随页面的其余部分滚动。</p>
+</body>
+</html>

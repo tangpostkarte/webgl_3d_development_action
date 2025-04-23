@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Sample12_1</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/stats.js"></script>
+    <script type="text/javascript" src="util/dat.gui.js"></script>
+    <script type="text/javascript" src="util/tween.min.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+
+<div id="Stats-output">
+</div>
+<div id="WebGL-output">
+</div>
+
+<script type="text/javascript">
+
+    var tween;
+    var is_check;
+    var mouse = new THREE.Vector2();
+
+    function init() {
+
+        var stats = initStats();
+
+        var scene = new THREE.Scene();
+
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // 创建渲染并设置大小
+        var canvasRenderer = new THREE.WebGLRenderer();
+        canvasRenderer.setClearColor(new THREE.Color(0x000000, 1.0));
+        canvasRenderer.setSize(window.innerWidth, window.innerHeight);
+
+        // 将摄像机定位并指向场景的中心
+        camera.position.x = 0;
+        camera.position.y = 0;
+        camera.position.z = 150;
+
+        // 将渲染器的输出添加到HTML元素
+        document.getElementById("WebGL-output").appendChild(canvasRenderer.domElement);
+
+        document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+        document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+        //document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+
+        createSprites();
+        render();
+
+        //鼠标移动监听
+        function onDocumentMouseMove() {
+            is_check = false;
+            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+        }
+        
+        //鼠标按下监听
+        function onDocumentMouseDown() {
+            is_check = true;
+            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+        }
+        
+        //创建粒子
+        function createSprites()
+        {
+            //创建粒子材质
+            for (var x = -5; x < 5; x++) {
+                for (var y = -5; y < 5; y++) {
+                    var material = new THREE.SpriteMaterial({color:0xff0000*Math.random()});
+                    //创建粒子
+                    var sprite = new THREE.Sprite(material);
+                    //设置粒子位置
+                    let ad = Math.PI / 180 * (360 * Math.random());
+                    let bd = Math.PI / 180 * (360 * Math.random());
+                    sprite.position.set(40 * Math.cos(ad)*Math.cos(bd), 40 * Math.cos(ad)*Math.sin(bd), 40 * Math.sin(ad));
+                    //添加到场景中
+                    pointmove(0,0,0,sprite);
+                    scene.add(sprite);
+                }
+            }
+        }
+
+        //平滑移动
+        function pointmove( mx, my, mz, point) {
+            console.log("滑动"+mx+" "+my+" "+mz+" ");
+            tween = new TWEEN.Tween( point.position ).to( {
+                x: mx,
+                y: my,
+                z: mz }, 3000 )
+                .easing( TWEEN.Easing.Linear.None).start();
+            tween.repeat(Infinity); // repeats forever
+        };
+
+        //渲染
+        function render() {
+            stats.update();
+            requestAnimationFrame(render);
+            TWEEN.update();
+            canvasRenderer.render(scene, camera);
+        }
+
+        //监听网页状态
+        function initStats() {
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

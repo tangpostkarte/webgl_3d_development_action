@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Example</title>
+	<script type="text/javascript" src="util/ammo.js"></script>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+	<script type="text/javascript" src="util/Detector.js"></script>
+	<script type="text/javascript" src="util/TextureLoader.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<div id="container">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+		if ( ! Detector.webgl ) {
+            Detector.addGetWebGLMessage();
+            document.getElementById( 'container' ).innerHTML = "";
+        }
+		
+			//绘制图形用到的变量
+			var container,scene,camera,renderer;
+			var cube;
+			var clock = new THREE.Clock();
+			
+			var transform = new Ammo.btTransform();
+			//模拟物理时用到的变量
+			var collisionConfiguration;
+			var dispatcher;
+			var broadphase;
+			var solver;
+			var dynamicsWorld;
+			var rigidBodies = [];
+			
+			var material;
+			var shape;
+			var loader = new THREE.TextureLoader();
+			
+			var box;
+			var	Sphere;
+			var plane;
+			var cylinder;
+			
+			var COL_NOTHING = 0; //<Collide with nothing//表示什么都不碰撞
+			var COL_GROUND = BIT(1);//地面//表示与地面碰撞
+			var COL_CUBOID = BIT(2);//立方体//表示与木块碰撞
+			var COL_CONE = BIT(4);//圆锥//表示与圆锥体碰撞
+			var COL_BALL = BIT(8);//球//表示与球碰撞
+			
+			var groundCollidesWith = COL_CUBOID | COL_CONE | COL_BALL;//表示地面与立方体、圆锥、球碰撞
+			var cuboidCollidesWith = COL_GROUND;//表示木块与地面碰撞
+			var coneCollidesWith = COL_GROUND;//表示圆锥与地面碰撞
+			var ballCollidesWith = COL_GROUND;//表示球与地面碰撞
+			
+			init();
+            animate();
+			function init() {
+				initGraphics();
+				initPhysics();
+				createObjects();
+            }
+			function BIT(x){
+				return 1<<x;
+			}
+			function initGraphics() {
+				container = document.getElementById( 'container' );
+				scene = new THREE.Scene();//新建场景
+				//新建摄像机位置
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				renderer = new THREE.WebGLRenderer();//新建渲染器
+				renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+				renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+				camera.position.x = 0;//设置摄像机位置
+				camera.position.y = 20;
+				camera.position.z = 20;
+				camera.lookAt(scene.position);//设置摄像机焦点
+
+				var pointLight = new THREE.PointLight("#ffffff"); 	//创建聚光灯光源
+				pointLight.position.set(50,50,50);
+				scene.add(pointLight);
+				container.appendChild( renderer.domElement );
+            }
+			function initPhysics() {
+				collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();//创建碰撞检测配置信息对象
+				dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );//创建碰撞检测算法分配者对象，其功能为扫描所有的碰撞检测对，并确定适用的检测策略对应的算法
+				//设置整个物理世界的边界信息
+				var worldAabbMin = new Ammo.btVector3(-10000, -10000, -10000);
+				var worldAabbMax = new Ammo.btVector3(10000, 10000, 10000);
+				var maxProxies = 1024;
+				//创建碰撞检测粗测阶段的加速算法对象
+				var overlappingPairCache =new Ammo.btAxisSweep3(worldAabbMin, worldAabbMax, maxProxies);
+				//创建推动约束解决者对象
+				var solver = new Ammo.btSequentialImpulseConstraintSolver();
+				//创建物理世界对象
+				dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver,collisionConfiguration);
+				//设置重力加速度
+				dynamicsWorld.setGravity(new Ammo.btVector3(0, -10, 0));///
+            }
+			
+			function createObjects() {
+				//创建立方体的网格对象和刚体的相关代码
+				loader.load('textures/box.jpg',function ( texture ){
+					material = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+					var sx=2,sy=2,sz=2;mass=10;
+					var pos = new THREE.Vector3(0,5,0);
+					var quat = new THREE.Quaternion(0,0,0,1);
+					shape = new Ammo.btBoxShape( new Ammo.btVector3( sx*0.5, sy*0.5, sz*0.5) );
+					box = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+					createRigidBody( box, shape, mass, pos, quat );
+					dynamicsWorld.removeRigidBody(box.userData.physicsBody);
+					dynamicsWorld.addRigidBody(box.userData.physicsBody, COL_CUBOID, cuboidCollidesWith);
+				});
+				//创建球体的网格对象和刚体的相关代码
+				loader.load('textures/basketball.png',function ( texture ){
+					var SphereMaterial = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+					var radius=1;mass=10;
+					var pos = new THREE.Vector3(0,2,0);
+					var quat = new THREE.Quaternion(0,0,0,1);
+					var sphereShape = new Ammo.btSphereShape(radius);
+					Sphere = new THREE.Mesh( new THREE.SphereGeometry( radius,20,20), SphereMaterial );
+					createRigidBody( Sphere, sphereShape, mass, pos, quat );
+					dynamicsWorld.removeRigidBody(Sphere.userData.physicsBody);
+					dynamicsWorld.addRigidBody(Sphere.userData.physicsBody, COL_BALL, ballCollidesWith);
+				});
+				//创建地板的网格对象和刚体的相关代码
+				loader.load('textures/floor.jpg',function ( texture ){
+					texture.wrapS = THREE.RepeatWrapping;  
+					texture.wrapT = THREE.RepeatWrapping;  
+					texture.repeat.set( 4, 4 );
+					var planePos = new THREE.Vector3(0,0,0);
+					var planeQuat = new THREE.Quaternion(0,0,0,1);
+					var planeMaterial=new THREE.MeshBasicMaterial({map: texture});//创建基本材质
+					plane=new THREE.Mesh( new THREE.PlaneGeometry(160, 160, 4, 4), planeMaterial );
+					plane.rotation.x = -0.5 * Math.PI;
+					var planeShape=new Ammo.btStaticPlaneShape(new Ammo.btVector3(0, 1, 0), 0);
+					createRigidBody( plane, planeShape, 0 , planePos,planeQuat );
+					dynamicsWorld.removeRigidBody(plane.userData.physicsBody);
+					dynamicsWorld.addRigidBody(plane.userData.physicsBody, COL_GROUND, groundCollidesWith);
+				});
+				//创建圆柱体的网格对象和刚体的相关代码
+				loader.load('textures/muwen.jpg',function ( texture ){
+					var mass=10;
+					var cylinderMaterial=new THREE.MeshBasicMaterial({map: texture});//创建基本材质			
+					var cone = new THREE.Mesh( new THREE.CylinderGeometry(0, 2, 2,20,20), cylinderMaterial );
+					var coneShape=new Ammo.btConeShape(2,2);//x h/2 z
+					var conePos = new THREE.Vector3(0,5,0);
+					createRigidBody( cone, coneShape, mass, conePos, Quat);
+					var Quat = new THREE.Quaternion(0,0,0,1);
+					dynamicsWorld.removeRigidBody(cone.userData.physicsBody);
+					dynamicsWorld.addRigidBody(cone.userData.physicsBody,COL_CONE, coneCollidesWith);
+				});
+				
+			}
+			function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
+				var isDynamic = (mass != 0);//物体是否可以运动
+				var localInertia = new Ammo.btVector3(0, 0, 0);//惯性向量
+				if(isDynamic) //如果物体可以运动
+				{
+					physicsShape.calculateLocalInertia(mass, localInertia);//计算惯性
+				}
+				var startTransform = new Ammo.btTransform();//创建刚体的初始变换对象
+				startTransform.setIdentity();//变换初始化
+				threeObject.position.set(pos.x, pos.y, pos.z);
+				startTransform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );//设置初始的位置
+				//创建刚体的运动状态对象
+				var myMotionState = new Ammo.btDefaultMotionState(startTransform);
+				//创建刚体信息对象
+				var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, myMotionState, physicsShape, localInertia);
+				var body = new Ammo.btRigidBody(rbInfo);//创建刚体
+				body.setRestitution(0.6);//设置反弹系数
+				body.setFriction(0.8);//设置摩擦系数
+				body.isActive=true;
+				threeObject.userData.physicsBody=body;
+				console.log(threeObject.userData);
+				scene.add(threeObject);
+				if(isDynamic){
+				rigidBodies.push(threeObject);
+				}
+				dynamicsWorld.addRigidBody(body);//将刚体添加进物理世界
+
+            }
+			function animate() {
+                requestAnimationFrame( animate );
+                render();
+            }
+            function render() {
+            	var deltaTime = clock.getDelta();
+            	updatePhysics( deltaTime );
+                renderer.render( scene, camera );
+            }
+			function updatePhysics( deltaTime ) {
+				dynamicsWorld.stepSimulation( deltaTime, 10 );
+			    for ( var i = 0; i <rigidBodies.length; i++ ) {
+			    	var objThree = rigidBodies[i];
+			    	var objPhys = objThree.userData.physicsBody;	
+					var ms = objPhys.getMotionState();
+					if ( ms ) {
+			        	ms.getWorldTransform(transform);
+						var p = transform.getOrigin();
+						var q = transform.getRotation();
+						objThree.position.set( p.x(), p.y(), p.z() );
+						objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			      	}
+			    }
+			}
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

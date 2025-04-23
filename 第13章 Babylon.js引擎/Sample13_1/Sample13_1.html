@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <script type="text/javascript" src="bulid/babylon.custom.js"></script>
+
+        <style>
+
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+
+            #fpsLabel {
+                position: absolute;
+                left: 100px;
+                top: 20px;
+                cursor: default;
+                z-index:10;
+                background-color: #7283a0;
+                color:white;
+                padding:5px;
+                border-radius: 3px;
+                font-family: 'Montserrat';
+                pointer-events: none;
+                user-select: none;
+            }
+
+            #versionLabel{
+                position: absolute;
+                left: 10px;
+                top: 20px;
+                cursor: default;
+                z-index:10;
+                background-color: #7283a0;
+                color:white;
+                padding:5px;
+                border-radius: 3px;
+                font-family: 'Montserrat';
+                pointer-events: none;
+                user-select: none;
+            }
+
+        </style>
+    </head>
+<body>
+    <span  id="fpsLabel">FPS</span>
+    <span  id="versionLabel">Version</span>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = new BABYLON.Engine(canvas, true);
+
+        document.getElementById("versionLabel").innerHTML=`&nbspVersion&nbsp<br>WebGL `+engine.webGLVersion;
+
+        var createScene = function () {
+
+            //创建场景
+            var scene = new BABYLON.Scene(engine);
+            //创建弧度旋转摄像机
+            var camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 0, new BABYLON.Vector3(0, 0, 0), scene);
+            camera.setPosition(new BABYLON.Vector3(0,40,40));
+            camera.attachControl(canvas, true);
+
+        	//创建平行光
+        	var light = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(-1, -1, -1), scene);
+            //设置阴影投放的位置
+            light.position=new BABYLON.Vector3(30,30,30);
+          
+            var materialSphere1=new BABYLON.StandardMaterial("materialSphere1", scene);
+            materialSphere1.wireframe = true;
+            //球体
+            var sphere=BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 30}, scene);
+            sphere.material=materialSphere1;
+            
+            var angle=0;
+
+            scene.onBeforeRenderObservable.add(()=>{
+				angle=angle+0.01;
+				//修改圆环结的旋转角度
+				sphere.rotation.set(0,angle,0);
+			})
+
+            /*********************End********************************/
+            return scene;
+        
+        };
+        
+        //获取FPS标签Dom对象
+        var fpsLabel=document.getElementById('fpsLabel');    
+
+        var scene=createScene();
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                fpsLabel.innerHTML=`&nbspFPS&nbsp<br>&nbsp${Math.floor(engine.getFps())}`;
+                scene.render();
+            }
+        });
+
+        //窗口变化监听
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<!--本案例演示了格式标签的一部分标签使用的小案例，剩下一部分会在下面给出-->
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ <title>Sample1_2</title></head>
+<body>
+这里演示的为缩写示例：The <abbr title="People's Republic of China">PRC</abbr> was founded in 1949.
+<p>这里演示加粗文本示例 <b>此处加粗</b>.</p>
+<!--根据H5规范粗体为最后选择，没有其他标签适用时才会选择，应先从标题、被强调文本、标记文本等标签中选择-->
+<ul>
+<!--此处为bdi标签，设置一段文本使其脱离父元素的文本方向设置-->
+ <li>User <bdi>Bob</bdi>: 60 points</li>
+ <li>User <bdi>Jerry</bdi>: 80 points</li>
+ <li>User <bdi>Tom</bdi>: 90 points</li>
+</ul>
+<p>接下来示例的为bdo标签，其中可以定义dir属性来覆盖默认文本方向</p>
+<bdo dir="rtl"><!--dir的值有rtl右向左与ltr左向右两种值-->
+现在展示的是从右向左的文本方向
+</bdo><br/>
+<!--下面几个标签一般还会搭配着id、class等一些属性使用，这些属性在下面会有介绍-->
+<big>这里演示&lt;big&gt;标签示例</big><br/>
+<em>这里演示&lt;em&gt;标签示例</em><br/>
+<i>这里演示倾斜标签&lt;i&gt;示例</i><br/>
+<small>这里演示&lt;small&gt;标签</small><br/>
+此处将演示下标标签用法
+<sub>subscript</sub><br/>
+此处将演示上标标签用法
+<sup>superscript</sup><br/>
+</body>
+</html>

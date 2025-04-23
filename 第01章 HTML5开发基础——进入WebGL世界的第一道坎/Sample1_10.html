@@ -1,0 +1,65 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sample1_10</title>
+<style type="text/css">div{float:left;}</style>
+</head>
+<body>
+<div>
+<p>接下来我们将演示如何定义跨行或跨列的表格单元格：</p>
+<h4>横跨两列的单元格：</h4>
+<table border="1"><tr>
+  <th>姓名</th><th colspan="2">电话</th>
+</tr><tr>
+  <td>张三</td><td>123456</td><td>123455</td>
+</tr></table>
+<h4>横跨两行的单元格：</h4>
+<table border="1"><tr>
+  <th>姓名</th><td>李四</td>
+</tr><tr>
+  <th rowspan="2">电话</th><td>12345</td>
+</tr><tr>
+  <td>21345</td>
+</tr></table>
+<!--colspan 属性规定表头单元格可横跨的列数,rowspan 属性规定表头单元格可横跨的行数。-->
+<p>接下来我们来演示一下在表格内如何使用其他类型的标签:</p>
+<table border="1">
+<tr><td>
+   <p>这是一个段落。</p><p>这是另一个段落。</p>
+  </td><td>这个单元包含一个表格：
+   <table border="1"><tr>
+     <td>100</td><td>200</td>
+   </tr><tr>
+     <td>300</td><td>400</td>
+   </tr></table></td>
+</tr><tr>
+  <td>这个单元包含一个列表：
+   <ul><li>苹果</li><li>香蕉</li><li>菠萝</li>
+   </ul></td><td>HELLO</td>
+</tr></table></div>
+<!--由本部分示例可以看出如果想在表格内部嵌套一些其他标签则直接在td标签内部继续添加标签即可。-->
+
+<p>现在我们要演示的为用于规定单元格边与内容的距离和单元格之间的距离的两个属性的应用：</p>
+<h4>没有cellpadding，即单元格与内容没有距离：</h4>
+<table border="1"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+<h4>带有cellpadding，即单元格与内容有距离：</h4>
+<table border="1" cellpadding="10"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+<!--cellpadding 属性规定单元边沿与其内容之间的空白。-->
+<h4>带有cellspacing：</h4>
+<table border="1" cellspacing="10"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+<!--cellspacing 属性规定的是单元之间的空间。从实用角度出发，
+最好不要规定 cellpadding，而是使用 CSS 来添加内边距。-->
+</body>
+</html>

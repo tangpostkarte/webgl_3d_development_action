@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample14_1</title>
+	<script type="text/javascript" src="util/ammo.js"></script>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+	<script type="text/javascript" src="util/Detector.js"></script>
+	<script type="text/javascript" src="util/TextureLoader.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<div id="container">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+		if ( ! Detector.webgl ) {
+            Detector.addGetWebGLMessage();
+            document.getElementById( 'container' ).innerHTML = "";
+        }
+		
+			//绘制图形用到的变量
+			var container,scene,camera,renderer;
+			var cube;
+			var clock = new THREE.Clock();
+			
+			var transform = new Ammo.btTransform();
+			//模拟物理时用到的变量
+			var collisionConfiguration;//碰撞检测配置信息
+			var dispatcher;//碰撞检测算法分配器
+			var broadphase;
+			var solver;
+			var dynamicsWorld;//物理世界引用
+			var rigidBodies = [];//刚体数组
+			var plane;
+			var material;
+			var shape;
+			var loader = new THREE.TextureLoader();
+			
+			init();
+            animate();
+			function init() {
+				initGraphics();//初始化场景
+				initPhysics();//初始化物理世界
+				createObjects();//创建物体
+            }
+            //初始化场景方法
+			function initGraphics() {
+				container = document.getElementById( 'container' );
+				scene = new THREE.Scene();//新建场景
+				//新建摄像机位置
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				renderer = new THREE.WebGLRenderer();//新建渲染器
+				renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+				renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+                renderer.shadowMapEnabled = true;
+				camera.position.x = 0;//设置摄像机位置
+				camera.position.y = 20;
+				camera.position.z = 20;
+				camera.lookAt(scene.position);//设置摄像机焦点
+
+				var pointLight = new THREE.PointLight("#ffffff"); 	//创建聚光灯光源
+				pointLight.position.set(50,50,50);
+				pointLight.castShadow = true;
+				scene.add(pointLight);
+				container.appendChild( renderer.domElement );
+            }
+            //初始化物理世界
+			function initPhysics() {
+				collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();//创建碰撞检测配置信息对象
+				dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );//创建碰撞检测算法分配者对象，其功能为扫描所有的碰撞检测对，并确定适用的检测策略对应的算法
+				//设置整个物理世界的边界信息
+				var worldAabbMin = new Ammo.btVector3(-10000, -10000, -10000);
+				var worldAabbMax = new Ammo.btVector3(10000, 10000, 10000);
+				var maxProxies = 1024;
+				//创建碰撞检测粗测阶段的加速算法对象
+				var overlappingPairCache =new Ammo.btAxisSweep3(worldAabbMin, worldAabbMax, maxProxies);
+				//创建推动约束解决者对象
+				var solver = new Ammo.btSequentialImpulseConstraintSolver();
+				//创建物理世界对象
+				dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver,collisionConfiguration);
+				//设置重力加速度
+				dynamicsWorld.setGravity(new Ammo.btVector3(0, -10, 0));
+            }
+			//创建初始的方块堆
+			function createObjects() {
+			//加载纹理图片
+				loader.load('textures/box.jpg',function ( texture ){
+					material = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+
+                    //设置木箱的大小
+					var sx=2,sy=2,sz=2;
+					//设置木箱的mass值  质量 用于计算惯性系数
+                    //碰撞的效果与质量和物体碰撞时的速度有关
+                    //不但决定于质量
+					mass=2;
+					//物体初始位置
+					var pos = new THREE.Vector3(0,10,0);
+					//旋转所使用的四元数
+					var quat = new THREE.Quaternion(0,0,0,1);
+					//设置物体形状向量 用于计算碰撞 计算碰撞 以重心为中心计算碰撞范围
+					shape = new Ammo.btBoxShape( new Ammo.btVector3( sx*0.5, sy*0.5, sz*0.5) );
+					for(var i=0;i<3;i++)
+                    {
+                        for(var j=0;j<3;j++)
+                        {
+                            for(var k=0;k<3;k++)
+                            {
+                                //设置方块位置
+                                var boxpos = new THREE.Vector3(i*2, 10+j, k*2);
+                                //创建方块
+                                var box = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+                                //调用创建刚体方法  创建现实世界刚体
+                                //参数       3d物体 形状  质量  位置   旋转四元数
+                                createRigidBody( box, shape, mass, boxpos, quat );
+                            }
+                        }
+                    }
+				
+				});
+				//加载草地  创建草坪 添加到场景中
+				loader.load('textures/grass.png',function ( texture ){
+				texture.wrapS = THREE.RepeatWrapping;  
+				texture.wrapT = THREE.RepeatWrapping;  
+				texture.repeat.set( 10, 10 ); 
+				var planePos = new THREE.Vector3(0,0,0);
+				var planeQuat = new THREE.Quaternion(0,0,0,0);
+				var planeMaterial=new THREE.MeshBasicMaterial({map: texture});//创建基本材质
+				plane=new THREE.Mesh( new THREE.PlaneGeometry(40, 40, 4, 4), planeMaterial );
+				plane.rotation.x = -0.5 * Math.PI;
+				plane.receiveShadow = true;
+				//设置平面的法向量  表示平面形状的常量
+				var planeShape=new Ammo.btStaticPlaneShape(new Ammo.btVector3(0, 1, 0), 0);
+				createRigidBody( plane, planeShape, 0 , planePos,planeQuat );
+				});
+			}
+			//创建刚体
+			function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
+				var isDynamic = (mass != 0);//物体是否可以运动
+				var localInertia = new Ammo.btVector3(0, 0, 0);//惯性向量
+				if(isDynamic) //如果物体可以运动
+				{
+					physicsShape.calculateLocalInertia(mass, localInertia);//计算惯性
+				}
+				var startTransform = new Ammo.btTransform();//创建刚体的初始变换对象
+				startTransform.setIdentity();//变换初始化
+				threeObject.position.set(pos.x, pos.y, pos.z);
+				threeObject.castShadow = true;
+				startTransform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );//设置初始的位置
+				//创建刚体的运动状态对象
+				var myMotionState = new Ammo.btDefaultMotionState(startTransform);
+				//创建刚体信息对象
+				var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, myMotionState, physicsShape, localInertia);
+				var body = new Ammo.btRigidBody(rbInfo);//创建刚体
+				body.setRestitution(0.6);//设置反弹系数
+				body.setFriction(0.8);//设置摩擦系数
+				body.isActive=true;
+				threeObject.userData.physicsBody=body;
+				console.log(threeObject.userData);
+				scene.add(threeObject);
+				if(isDynamic)
+				{
+				    //将网格对象添加进刚体数组中
+				    rigidBodies.push(threeObject);
+				}
+				dynamicsWorld.addRigidBody(body);//将刚体添加进物理世界
+
+            }
+			function animate() {
+                requestAnimationFrame( animate );
+                render();
+            }
+            function render() {
+			    //获取一次渲染的时间
+            	var deltaTime = clock.getDelta();
+            	//更新物理世界状态
+            	updatePhysics( deltaTime );
+                renderer.render( scene, camera );
+            }
+            //更新物理状态
+			function updatePhysics( deltaTime ) {
+			    //更新物理世界的信息
+				dynamicsWorld.stepSimulation( deltaTime, 10 );
+				//遍历网格数组
+			    for ( var i = 0; i <rigidBodies.length; i++ )
+			    {
+			        //获取网格对象
+			    	var objThree = rigidBodies[i];
+			    	//获取该网格刚体的信息
+			    	var objPhys = objThree.userData.physicsBody;
+			    	//获取该刚体的运动状态
+					var ms = objPhys.getMotionState();
+					//如果获取信息成功
+					if ( ms )
+					{
+					    //获取刚体在世界坐标系下的变换对象
+			        	ms.getWorldTransform(transform);
+			        	//获取刚体的位置信息 旋转角度
+						var p = transform.getOrigin();
+						var q = transform.getRotation();
+						//更新刚体位置 角度
+						objThree.position.set( p.x(), p.y(), p.z() );
+						objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			      	}
+			    }
+			}
+			//重写鼠标按下监听
+			document.onmousedown=function(event)
+			{
+			    //设置物体位置 大小  初始速度 速度是向量
+                //方块生成后做平抛运动
+			    var sx=2,sy=2,sz=2;mass=10;
+                var pos = new THREE.Vector3(0,10,20);
+                var quat = new THREE.Quaternion(0,0,0,1);
+                var box = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+                box.castShadow = true;
+                createRigidBody( box, shape, mass, pos, quat );
+                box.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,2,-12));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+			};
+    }
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

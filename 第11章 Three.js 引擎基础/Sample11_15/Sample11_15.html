@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_15</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机位置
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        camera.position.x = 10;//设置摄像机位置
+        camera.position.y = 10;
+        camera.position.z = 10;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		var box;
+		function addMaterialAndGUI(){//添加材质和可视化界面的方法
+        var boxGeometry = new THREE.BoxGeometry(4, 4, 4);//创建立方体的几何体
+        var boxMaterial = new THREE.MeshLambertMaterial({color: 0x182793});
+        box = new THREE.Mesh(boxGeometry, boxMaterial);
+        scene.add(box);			//将球体添加到场景中
+		var spotLight = new THREE.SpotLight("#ffffff"); 	//创建聚光灯光源
+		spotLight.position.set(30,30,30);
+		scene.add(spotLight);
+		var ambientLight = new  THREE.AmbientLight("#1a1010");
+		scene.add(ambientLight);
+		var controls = new function () {
+            this.ambient = 0xffaa00;
+			this.emissive=0x000000;
+			this.ambientLightColor=0xffffff;
+			this.color = 0x182793;
+        };
+		 var gui = new dat.GUI();
+		 gui.addColor(controls, 'ambientLightColor',"环境光颜色").onChange(function (e) {
+            ambientLight.color = new THREE.Color(e);
+			console.log(ambientLight.color);
+        });
+        gui.addColor(controls, 'ambient',"材质的环境色").onChange(function (e) {
+            boxMaterial.ambient = new THREE.Color(e);
+        });
+		 
+		gui.addColor(controls, 'emissive',"材质的发射光").onChange(function (e) {
+            boxMaterial.emissive =new THREE.Color(e);
+        });
+		gui.addColor(controls, 'color',"材质本身的颜色").onChange(function (e) {
+            boxMaterial.color =new THREE.Color(e);
+        });
+		}
+		addMaterialAndGUI();
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();
+		function renderScene() {
+            box.rotation.y += 0.02;
+            requestAnimationFrame(renderScene);
+            renderer.render(scene, camera);
+        }
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

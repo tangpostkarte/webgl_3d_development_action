@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_32</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+	<script type="text/javascript" src="util/OBJLoader.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+
+<script type="text/javascript">
+
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(0x000000, 1.0);//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+        var model;//用来控制模型的变量
+		var loader = new THREE.OBJLoader();//新建obj的加载器
+        loader.load('model/konglong.obj', function (loadedMesh)
+        {//加载obj模型
+            var material = getNormalTextureMaterial("konglong.jpg","konglongn.jpg");//新建材质
+            //var texture = THREE.ImageUtils.loadTexture("textures/konglong.jpg");
+            //var mat = new THREE.MeshPhongMaterial();//新建Phong材质
+            //mat.map = texture;
+            loadedMesh.children.forEach(function (child) {//遍历模型的所有子对象
+                child.material = material;//将材质应用到模型中
+            });
+            model = loadedMesh;//将读取的模型赋值给model变量
+            loadedMesh.scale.set(0.7, 0.7, 0.7);//设置放大系数
+            loadedMesh.rotation.y=Math.PI*0.25;
+            scene.add(model);//将模型添加到场景中
+        });
+
+        //设置摄像机的位置
+        camera.position.x = 30;
+        camera.position.y = 30;
+        camera.position.z = 30;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));//设置摄像机焦点
+		var light = new THREE.DirectionalLight("#ffffff");
+        light.position.set(10, 10, 10);
+        scene.add(light);
+		
+		var spotLight = new THREE.SpotLight("#ffffff");	//创建聚光灯光源
+		spotLight.position.set(0,10,0);					//设置光源位置
+		scene.add(spotLight);							//将光源添加到场景中
+
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        var step = 0;
+        render();
+        function render() {
+
+			if (model) {
+                //model.rotation.y += 0.006;
+            }
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+		function getNormalTextureMaterial(imageName,normalName){//创建带有纹理的网格对象
+            var texture = THREE.ImageUtils.loadTexture("textures/" + imageName);//读取纹理贴图的数据
+			var normal = THREE.ImageUtils.loadTexture("textures/" + normalName);//读取法相贴图的数据
+            var mat = new THREE.MeshPhongMaterial();//新建Phong材质
+            mat.map = texture;//将读取的数据赋值给材质的map属性
+			mat.normalMap = normal;
+            return mat;//返回网格对象
+        }
+
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

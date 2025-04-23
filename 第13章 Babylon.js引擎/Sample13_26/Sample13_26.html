@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>GPU粒子</title>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            //从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            //加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+
+
+            var createScene = function() {
+                var scene = new BABYLON.Scene(engine);
+
+                // 创建环境
+                var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 0.8, 20, new BABYLON.Vector3(0, 0, 0), scene);
+                camera.attachControl(canvas, true);
+                camera.wheelPrecision = 100;
+
+                var fountain = BABYLON.Mesh.CreateBox("foutain", 0.1, scene); //创建一个盒子
+                fountain.visibility = 0.1; //设置盒子透明度
+
+                var particleSystem; //粒子系统
+                var useGPUVersion = true; //使用GPU粒子标志位
+
+                //创建粒子系统
+                var createNewSystem = function() {
+                    if (particleSystem) { //如果粒子系统存在
+                        particleSystem.dispose(); //粒子系统清除，释放内存
+                    }
+
+                    if (useGPUVersion && BABYLON.GPUParticleSystem.IsSupported) { //使用GPU粒子
+                        particleSystem = new BABYLON.GPUParticleSystem("particles", {
+                            capacity: 1000000
+                        }, scene); //创建粒子系统
+                        particleSystem.activeParticleCount = 200000; //存活粒子数量
+                    } else {
+                        particleSystem = new BABYLON.ParticleSystem("particles", 50000, scene); //创建粒子系统
+                    }
+
+                    particleSystem.emitRate = 10000; //粒子系统发射率（每帧发射的最大粒子数）
+                    particleSystem.particleEmitterType = new BABYLON.SphereParticleEmitter(1); //粒子发射器类型（盒子、球体或者锥体）
+                    particleSystem.particleTexture = new BABYLON.Texture("pic/flare.png", scene); //粒子系统纹理
+                    particleSystem.maxLifeTime = 10; //粒子系统的粒子最大寿命
+                    particleSystem.minSize = 0.01; //粒子系统粒子最小尺寸
+                    particleSystem.maxSize = 0.1; //粒子系统粒子最大尺寸
+                    particleSystem.emitter = fountain; //粒子系统发射器为盒子
+
+                    particleSystem.start(); //粒子系统开始发射粒子
+                }
+
+                createNewSystem(); //创建粒子系统
+
+
+                var alpha = 0; //粒子发射器盒子角度
+                var moveEmitter = false; //移动粒子系统发射器标志位
+                var rotateEmitter = false; //旋转粒子系统发射器标志位
+
+                //在每个帧渲染之前注册要调用的函数
+                scene.registerBeforeRender(function() {
+                    if (moveEmitter) { //如果发射器移动
+                        fountain.position.x = 5 * Math.cos(alpha); //发射器位置在圆周上
+                        fountain.position.z = 5 * Math.sin(alpha); //
+                    }
+
+                    if (rotateEmitter) { //如果发射器旋转
+                        fountain.rotation.x += 0.01; //发射器沿x轴旋转
+                    }
+
+                    alpha += 0.01; //角度增加
+                });
+
+                // GUI标签
+                var advancedTexture;
+
+                //创建GUI标签方法
+                var buildUI = function() {
+                    if (advancedTexture) { //如果标签存在
+                        advancedTexture.dispose(); //标签释放
+                    }
+                    advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI"); //创建UI标签
+
+                    var rightPanel = new BABYLON.GUI.StackPanel(); //创建2D面板容器
+                    rightPanel.width = "300px";
+                    rightPanel.isVertical = true;
+                    rightPanel.paddingRight = "20px";
+                    rightPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+                    rightPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+                    rightPanel.fontSize = 16;
+                    advancedTexture.addControl(rightPanel);
+
+                    var bottomPanel = new BABYLON.GUI.StackPanel();
+                    bottomPanel.height = "100px";
+                    bottomPanel.paddingBottom = "20px";
+                    bottomPanel.isVertical = true;
+                    bottomPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_STRETCH;
+                    bottomPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                    bottomPanel.fontSize = 16;
+                    advancedTexture.addControl(bottomPanel);
+
+                    var upPanel = new BABYLON.GUI.StackPanel();
+                    upPanel.height = "100px";
+                    upPanel.isVertical = true;
+                    upPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_STRETCH;
+                    upPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+                    upPanel.fontSize = 16;
+                    advancedTexture.addControl(upPanel);
+
+                    var leftPanel = new BABYLON.GUI.StackPanel();
+                    leftPanel.width = "300px";
+                    leftPanel.isVertical = true;
+                    leftPanel.paddingLeft = "20px";
+                    leftPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                    leftPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+                    leftPanel.fontSize = 16;
+                    advancedTexture.addControl(leftPanel);
+                    // 获取GUI
+                    var getPropertyPath = function(property) {
+                            var dotIndex = property.indexOf(".");
+
+                            if (dotIndex === -1) {
+                                return particleSystem[property];
+                            }
+
+                            var splits = property.split(".");
+
+                            return particleSystem[splits[0]][splits[1]];
+                        }
+                        // 设置GUI值
+                    var setPropertyPath = function(property, value) {
+                        var dotIndex = property.indexOf(".");
+
+                        if (dotIndex === -1) {
+                            particleSystem[property] = value;
+                            return;
+                        }
+
+                        var splits = property.split(".");
+
+                        particleSystem[splits[0]][splits[1]] = value;
+                    }
+
+                    //创建颜色编辑器
+                    var addColorPicker = function(text, property, left, panel) {
+                        var header = new BABYLON.GUI.TextBlock();
+                        header.text = text;
+                        header.height = "30px";
+                        header.color = "white";
+                        header.outlineWidth = "4px";
+                        header.outlineColor = "black";
+                        header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                        panel.addControl(header);
+
+                        if (left) {
+                            header.left = left;
+                        }
+
+                        var colorPicker = new BABYLON.GUI.ColorPicker();
+                        colorPicker.onSync = function() {
+                            colorPicker.value = particleSystem[property];
+                        }
+                        colorPicker.onSync();
+                        colorPicker.size = "100px";
+                        colorPicker.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                        colorPicker.onValueChangedObservable.add(function(value) {
+                            particleSystem[property] = value;
+                        });
+
+                        if (left) {
+                            colorPicker.left = left;
+                        }
+
+                        panel.addControl(colorPicker);
+
+                        return colorPicker;
+                    }
+
+                    //创建选中框
+                    var addCheckbox = function(text, initial, onCheck, panel) {
+                        var checkbox = new BABYLON.GUI.Checkbox();
+                        checkbox.width = "20px";
+                        checkbox.height = "20px";
+                        checkbox.color = "green";
+                        checkbox.isChecked = initial;
+                        checkbox.onIsCheckedChangedObservable.add(function(value) {
+                            console.log(value);
+                            onCheck(value);
+                        });
+
+                        var header = BABYLON.GUI.Control.AddHeader(checkbox, text, "180px", {
+                            isHorizontal: true,
+                            controlFirst: true
+                        });
+                        header.height = "30px";
+                        header.color = "white";
+                        header.outlineWidth = "4px";
+                        header.outlineColor = "black";
+                        header.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+
+                        panel.addControl(header);
+                    }
+
+                    //创建滑动条
+                    var addSlider = function(text, property, min, max, left, panel, top, fixedPoint) {
+                            var topPanel = new BABYLON.GUI.StackPanel();
+                            topPanel.height = "30px";
+                            topPanel.isVertical = false;
+                            panel.addControl(topPanel);
+
+                            var header = new BABYLON.GUI.TextBlock();
+                            header.text = text;
+                            header.width = "150px";
+                            header.color = "white";
+                            header.outlineWidth = "4px";
+                            header.outlineColor = "black";
+                            header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                            topPanel.addControl(header);
+                            if (left) {
+                                header.left = left;
+                            }
+
+                            var valueHeader = new BABYLON.GUI.TextBlock();
+                            valueHeader.text = getPropertyPath(property).toFixed(fixedPoint);
+                            valueHeader.width = "100px";
+                            valueHeader.color = "white";
+                            valueHeader.outlineWidth = "4px";
+                            valueHeader.outlineColor = "black";
+                            valueHeader.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+                            topPanel.addControl(valueHeader);
+
+                            var slider = new BABYLON.GUI.Slider();
+                            slider.minimum = min;
+                            slider.maximum = max;
+                            slider.height = "20px";
+                            slider.color = "green";
+                            slider.background = "white";
+                            slider.onSync = function() {
+                                slider.value = getPropertyPath(property);
+                            }
+                            slider.onSync();
+                            slider.onValueChangedObservable.add(function(value) {
+                                valueHeader.text = value.toFixed(fixedPoint);
+                                setPropertyPath(property, value);
+                            });
+
+                            if (left) {
+                                slider.paddingLeft = left;
+                            }
+
+                            panel.addControl(slider);
+
+                            return slider;
+                        }
+                        // 创建矩形容器
+                    var addSeparator = function(panel) {
+                        var rectangle = new BABYLON.GUI.Rectangle();
+                        rectangle.height = "15px";
+                        rectangle.thickness = 0;
+                        panel.addControl(rectangle);
+                    }
+
+                    //滑动条上方数字文本
+                    var addHeader = function(text, panel) {
+                            var header = new BABYLON.GUI.TextBlock();
+                            header.text = text;
+                            header.height = "30px";
+                            header.color = "white";
+                            header.outlineWidth = "4px";
+                            header.outlineColor = "black";
+                            header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+
+                            panel.addControl(header);
+                        }
+                        // particleSystem.activeParticleCount 获取或设置活动粒子的数目。 
+                    if (particleSystem.activeParticleCount) {
+                        // particleSystem.getCapacity()获取粒子系统容量
+                        addSlider("particles count:", "activeParticleCount", 0, particleSystem.getCapacity(), "20px", bottomPanel, 0, 0);
+                    } else {
+                        addHeader("particles count: " + particleSystem.getCapacity(), bottomPanel);
+                    }
+
+                    addSlider("updateSpeed:", "updateSpeed", 0, 0.1, "20px", rightPanel, 0, 2);
+                    addSeparator(rightPanel);
+                    addSlider("gravity:", "gravity.y", -5, 5, "20px", rightPanel, 0, 2);
+                    addSeparator(rightPanel);
+                    addSlider("minSize:", "minSize", 0.01, 1, "20px", rightPanel, 0, 2);
+                    addSlider("maxSize:", "maxSize", 0.01, 1, "20px", rightPanel, 0, 2);
+                    addSeparator(rightPanel);
+                    addSlider("minLifeTime:", "minLifeTime", 0.001, 10, "20px", rightPanel, 0, 2);
+                    addSlider("maxLifeTime:", "maxLifeTime", 0.001, 10, "20px", rightPanel, 0, 2);
+                    addSeparator(rightPanel);
+                    addSlider("minEmitPower:", "minEmitPower", 0, 10, "20px", rightPanel, 0, 2);
+                    addSlider("maxEmitPower:", "maxEmitPower", 0, 10, "20px", rightPanel, 0, 2);
+
+                    if (BABYLON.GPUParticleSystem.IsSupported) {
+                        addCheckbox("Use GPU particles", useGPUVersion, function(value) {
+                            useGPUVersion = value;
+                            createNewSystem();
+                            buildUI();
+                        }, leftPanel);
+                    } else {
+                        addHeader("Browser does not support WebGL2", leftPanel);
+                        addHeader("Using CPU particles instead...", leftPanel);
+                    }
+                    addCheckbox("Rotate emitter", false, function(value) {
+                        particleSystem.reset();
+                        rotateEmitter = value
+                    }, leftPanel);
+                    addCheckbox("Move emitter", false, function(value) {
+                        particleSystem.reset();
+                        moveEmitter = value
+                    }, leftPanel);
+                    addSeparator(leftPanel);
+                    addColorPicker("color1:", "color1", "20px", leftPanel);
+                    addColorPicker("color2:", "color2", "20px", leftPanel);
+                    addColorPicker("colorDead:", "colorDead", "20px", leftPanel);
+                }
+
+                buildUI();
+
+                return scene;
+            }
+
+            var scene = createScene();
+            //新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                scene.render();
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

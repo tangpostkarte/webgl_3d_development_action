@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Sample13_32</title>
+        
+        <script src="build/cannon.js"></script>
+        <script src="build/babylon.custom.js"></script>
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+        function init(){
+            var canvas,engine,scene,camera,light;
+            var sphere,sphere1,lines,linesMaterial;
+            let potinArray= [];
+            
+            function createScene() {
+                canvas = document.getElementById("renderCanvas");
+                engine = new BABYLON.Engine(canvas, true);
+            
+                scene = new BABYLON.Scene(engine);
+                scene.enablePhysics();
+                camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0,0,-40), scene);
+
+                light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+                light.intensity = 0.7;
+            
+                sphere = BABYLON.Mesh.CreateSphere("sphere", 8, 2, scene);
+                sphere.position.y = 8;
+                sphere.material = new BABYLON.StandardMaterial("s-mat", scene);
+
+                sphere1 = BABYLON.Mesh.CreateSphere("sphere1", 8,5, scene);
+                sphere1.position.y = -12;
+                sphere1.material = new BABYLON.StandardMaterial('')
+                
+                //为两个球体创建刚体
+                sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 0, restitution: 0.9 }, scene);
+                sphere1.physicsImpostor = new BABYLON.PhysicsImpostor(sphere1, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
+                //创建距离关节 设置距离最大值（绳子效果 绳子长度）
+                var distanceJoint = new BABYLON.DistanceJoint({ maxDistance: 20 });
+                //将两个球体使用关节连接
+                sphere.physicsImpostor.addJoint(sphere1.physicsImpostor, distanceJoint);
+                //给球体1添加一个动量
+                sphere1.physicsImpostor.applyImpulse(new BABYLON.Vector3(16, 0, 0), sphere1.getAbsolutePosition());
+            };
+            createScene();
+
+            engine.runRenderLoop(function () {
+                if (scene) {
+                scene.render();
+                }
+            });
+
+            // Resize
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

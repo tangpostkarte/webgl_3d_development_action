@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Example</title>
+   <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/ShaderPass.js"></script>
+    <script type="text/javascript" src="util/CopyShader.js"></script>
+
+    <script type="text/javascript" src="util/EffectComposer.js"></script>
+
+    <script type="text/javascript" src="util/MaskPass.js"></script>
+    <script type="text/javascript" src="util/RenderPass.js"></script>
+	<script type="text/javascript" src="util/BloomPass.js"></script>
+	<script type="text/javascript" src="util/ConvolutionShader.js"></script>
+	<script type="text/javascript" src="util/DotScreenPass.js"></script>
+	<script type="text/javascript" src="util/DotScreenShader.js"></script>
+	
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer;
+        var webGLRenderer = new THREE.WebGLRenderer();//新建渲染器
+        webGLRenderer.setClearColor(new THREE.Color(0x000000, 1.0));//设置背景颜色
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+		webGLRenderer.shadowMapEnabled = true;
+        renderer = webGLRenderer;
+		var earth;
+		var step=0;
+		var clock = new THREE.Clock();
+		 var composer;
+        
+		function createEarth(){//创建地球模型的方法
+			var Sphere = new THREE.SphereGeometry(10, 40, 40);//新建球体的几何对象
+			var planetTexture = THREE.ImageUtils.loadTexture("textures/Earth.png");//读取地球的纹理贴图
+            var specularTexture = THREE.ImageUtils.loadTexture("textures/EarthSpec.png");//读取高光贴图
+            var normalTexture = THREE.ImageUtils.loadTexture("textures/EarthNormal.png");//读取法线贴图
+			var planetMaterial = new THREE.MeshPhongMaterial();//新建phong材质
+            planetMaterial.specularMap = specularTexture;//设置高光贴图
+            planetMaterial.specular = new THREE.Color(0xffffff);//设置高光部分的颜色
+            planetMaterial.shininess = 40;//高光部分的亮度及范围
+            planetMaterial.normalMap = normalTexture;//设置法线贴图
+			planetMaterial.map = planetTexture;//设置纹理贴图
+			var sphere = new THREE.Mesh(Sphere,planetMaterial);//新建网格对象
+			scene.add(sphere);//将网格对象添加到场景中
+			earth=sphere;
+		}
+		createEarth();
+        camera.position.x = 30;//设置摄像机的x坐标
+        camera.position.y = 0;//设置摄像机的y坐标
+        camera.position.z = 30;//设置摄像机的z坐标
+        camera.lookAt(new THREE.Vector3(0, 0, 0));//设置摄像机焦点
+
+        var ambientLight = new THREE.AmbientLight(0xffffff);//新建环境光
+        scene.add(ambientLight);//将环境光添加到场景中
+		var light = new THREE.SpotLight();//新建聚光灯
+        light.position.set(0, 0, 30);//设置光源位置
+        light.intensity = 0.8;//设置光照强度
+        scene.add(light);//将聚光灯添加到场景中
+		function addDotScreenPass(){
+			var renderPass = new THREE.RenderPass(scene, camera);//新建RenderPass通道
+			var dotScreenPass = new THREE.DotScreenPass();//新建BloomPass通道
+			var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
+			effectCopy.renderToScreen = true;
+			composer = new THREE.EffectComposer(webGLRenderer);//新建效果组合器
+			composer.addPass(renderPass);
+			composer.addPass(dotScreenPass);
+			composer.addPass(effectCopy);
+		}
+		addDotScreenPass();
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        render();
+        function render() {
+			earth.rotation.y=step+=0.01;
+            requestAnimationFrame(render);//请求绘制下一帧
+			var delta = clock.getDelta();
+            composer.render(delta);
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

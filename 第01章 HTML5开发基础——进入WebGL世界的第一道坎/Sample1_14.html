@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sample1_14</title>
+<script>
+function printmsg()//文档打印之后执行的脚本方法
+{
+alert("此文档现在正在打印！");
+}
+function load()//页面加载完成后需要执行的脚本方法
+{
+alert("页面已加载！");
+}
+function showMsg()//浏览器窗口尺寸改变时执行的脚本方法
+{
+alert("您已改变浏览器窗口的尺寸！");
+}
+function upperCase()//元素失去焦点时执行的脚本方法
+{
+var x=document.getElementById("fname").value;
+document.getElementById("fname").value=x.toUpperCase();
+}
+function checkField(val)//在元素值改变时执行的脚本
+{
+alert("输入值已更改。新值是：" + val);
+}
+function copyText()//点击鼠标时执行的脚本
+{
+document.getElementById("field2").value=document.getElementById("field1").value;
+}
+function mouseDown()//鼠标按下时执行的脚本
+{
+document.getElementById("p1").style.color="red";
+}
+
+function mouseUp()//鼠标抬起时执行的脚本
+{
+document.getElementById("p1").style.color="green";
+}
+</script>
+</head>
+<body onafterprint="printmsg()" onload="load()" onresize="showMsg()">
+<p>本部分案例中我们试验的事件执行脚本时只写了alert，这里只是一个示例，
+在实际开发中我们应该在对应部分自己开发自己需要的代码。</p>
+<h1>请试着打印此文档，这时候会有提示出现。</h1>
+<p>onbeforeprint事件与onafterprint事件的用法一样，只是一个是在打印之前执行脚本，一个是在打印之后执行脚本。</p>
+<!--Internet Explorer 和 Firefox 支持 onafterprint 属性。在 IE 中，
+onafterprint 属性在打印对话框出现之前而不是之后发生。-->
+<p>&lt;body&gt;元素中还有一个onload事件，该事件表示在页面加载完毕后执行脚本。</p>
+<p>onresize事件为当浏览器窗口改变时执行脚本，本案例也进行了示例，读者可以改变一下浏览器窗口大小看一下结果。</p>
+<p>请随意输入一段英文字符，然后把焦点移动到字段外（鼠标单击输入框之外）：</p>
+请随意输入一段英文字符，在本元素失去焦点时小写字母会变为大写字母：
+<input type="text" name="fname" id="fname" onblur="upperCase()">
+<p>请修改输入字段中的文本，然后在字段外点击以触发 onchange。</p>
+请输入文本：<input type="text" name="txt" value="Hello" 
+	onchange="checkField(this.value)">
+<p>当按钮被单击时触发函数。此函数把文本从 Field1 复制到 Field2 中。</p>
+Field1: <input type="text" id="field1" value="Hello World!"><br>
+Field2: <input type="text" id="field2"><br><br>
+<button onclick="copyText()">复制文本</button>
+<p id="p1" onmousedown="mouseDown()" onmouseup="mouseUp()">
+请点击文本！mouseDown() 函数当鼠标按钮在段落上被按下时触发。此函数把文本颜色设置为红色。mouseUp()函数在鼠标按钮被释放时触发。mouseUp()函数把文本的颜色设置为绿色。</p>
+</body>
+</html>

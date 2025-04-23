@@ -1,0 +1,105 @@
+<!--suppress ALL -->
+<html lang="en">
+<head>
+ 	<title>Sample13_35</title><!--标题-->
+	<meta charset="UTF-8">
+    <script src="js/babylon.custom.js"></script>
+    <script src="js/util.js"></script>
+    
+</head>
+<style>
+	html, body {
+		overflow: hidden;
+		width   : 100%;
+		height  : 100%;
+		margin  : 0;
+		padding : 0;
+	}
+
+	#renderCanvas {
+		width   : 100%;
+		height  : 100%;
+		touch-action: none;
+	}
+
+    #webGlVersion {
+    position: absolute;
+    left: 70px;
+    top: 20px;
+    cursor: default;
+    z-index:10;
+    background-color: #7283a0;
+    color:white;
+    padding:5px;
+    border-radius: 3px;
+    font-family: 'Montserrat';
+    pointer-events: none;
+    user-select: none;
+    }
+
+    #fpsLabel {
+    position: absolute;
+    left: 10px;
+    top: 20px;
+    cursor: default;
+    z-index:10;
+    background-color: #7283a0;
+    color:white;
+    padding:5px;
+    border-radius: 3px;
+    font-family: 'Montserrat';
+    pointer-events: none;
+    user-select: none;
+    }
+</style>
+<body>
+    <span class='webGlVersion' id="webGlVersion">Version</span>
+    <span class="fpsLabel" id="fpsLabel">FPS</span>
+	<canvas id="renderCanvas"></canvas><!--新建一个渲染窗口标签-->
+	<script>
+        if(BABYLON.Engine.isSupported()){
+            window.addEventListener('DOMContentLoaded', ()=> {//建立动作监听       
+            let canvas,engine,camera,scene;//建立对象
+            const fpsLabel=document.getElementById('fpsLabel');
+            const webGlVersion1=document.getElementById('webGlVersion');
+            canvas = document.getElementById('renderCanvas');//获得canvans
+            engine = new BABYLON.Engine(canvas, true);//建立BABYLON引擎
+            BABYLON.Animation.AllowMatricesInterpolation = true;
+            webGlVersion.innerHTML=`&nbspVersion&nbsp<br>WebGL ${engine.webGLVersion}`;
+            engine.enableOfflineSupport = false;
+           
+            let craeteScene=(camera)=>{//创建场景
+                const scene = new BABYLON.Scene(engine);//新建一个场景变量
+                const cameraArry=[];
+                scene.ambientColor = new BABYLON.Color3(1, 1, 1);//设置场景环境颜色
+                camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI/2, Math.PI/3, 100, BABYLON.Vector3.Zero(), scene);// 在场景中添加一个相机并将其和画布关联。
+                camera.attachControl(canvas, true);//连接摄像机和场景    
+                camera.lowerRadiusLimit = 5;
+                camera.upperRadiusLimit =100;
+                camera.wheelDeltaPercentage = 0.01;
+                scene.activeCameras.push(camera);
+                        
+                const directionLight = new BABYLON.DirectionalLight("DirectionalLight1", new BABYLON.Vector3(0, -20.0, -40.0), scene);//新建一个方向光源
+                directionLight.intensity=0.7    ;//设置光照强度
+                let hemLight = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+                hemLight.intensity=0.3;
+                createBoxSky(scene);//为场景添加一个天空盒
+                
+                cameraArry.push(camera);
+                addBloomAndGUI(scene,cameraArry);
+                addMesh(scene,directionLight);//为场景添加物体
+                return scene;//返回一个场景对象
+			}
+            scene=craeteScene();//获取场景对象
+            engine.runRenderLoop(()=> {//通过引擎对场景进行循环的渲染
+                scene.render();//渲染的场景
+                fpsLabel.innerHTML=`&nbspFPS&nbsp<br>&nbsp${Math.floor(engine.getFps())}`;
+            });
+            window.addEventListener("resize",  ()=> {//设置窗口大小变化
+                engine.resize();//通过引擎对窗口进行变换
+            });});
+        } else{alert(`该浏览器不支持babylon引擎！！`);}
+        
+	</script>
+</body>
+</html>

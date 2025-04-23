@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>旋转的陀螺</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            color: #61443e;
+            font-family: Monospace;
+            font-size: 13px;
+            text-align: center;
+            background-color: #bfd1e5;
+            margin: 0px;
+            overflow: hidden;
+        }
+        
+        #info {
+            position: absolute;
+            top: 0px;
+            width: 100%;
+            padding: 5px;
+        }
+        
+        a {
+            color: #a06851;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"><br /><br /><br /><br /><br />Loading...</div>
+    <script src="js/ammo.js"></script>
+    <script src="js/three/three.min.js"></script>
+    <script src="js/three/OrbitControls.js"></script>
+    <script src="js/three/Detector.js"></script>
+    <script src="js/three/stats.min.js"></script>
+    <script>
+        Ammo().then(function(Ammo) {
+            if (!Detector.webgl) {
+                Detector.addGetWebGLMessage();
+                document.getElementById('container').innerHTML = "";
+            }
+            var terrainWidthExtents = 100;
+            var terrainDepthExtents = 100;
+            var terrainWidth = 128;
+            var terrainDepth = 128;
+            var terrainHalfWidth = terrainWidth / 2;
+            var terrainHalfDepth = terrainDepth / 2;
+            var terrainMaxHeight = 8;
+            var terrainMinHeight = -2;
+            var container, stats;
+            var camera, controls, scene, renderer;
+            var terrainMesh, texture;
+            var clock = new THREE.Clock();
+            var collisionConfiguration;
+            var dispatcher;
+            var broadphase;
+            var solver;
+            var physicsWorld;
+            var terrainBody;
+            var dynamicObjects = [];
+            var transformAux1 = new Ammo.btTransform();
+            var heightData = null;
+            var ammoHeightData = null;
+            var time = 0;
+            var objectTimePeriod = 3;
+            var timeNextSpawn = time + objectTimePeriod;
+            var maxNumObjects = 30;
+            var margin = 0.05;
+            var groundbody;
+            var textureLoader;
+            var clickRequest = false;
+            var mouseCoords = new THREE.Vector2();
+            var raycaster = new THREE.Raycaster();
+            var ballMaterial = new THREE.MeshPhongMaterial({
+                color: 0x202020
+            });
+            var pos = new THREE.Vector3();
+            var quat = new THREE.Quaternion();
+            init();
+            animate();
+
+            function init() {
+                heightData = generateHeight(terrainWidth, terrainDepth, terrainMinHeight, terrainMaxHeight); //获取平面高度
+                initGraphics();
+                initPhysics();
+                initInput();
+            }
+
+            function initGraphics() {
+                container = document.getElementById('container'); //得到div对象
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.2, 2000); //创建摄像机
+                scene = new THREE.Scene(); //创建场景
+                camera.position.y = 25; //设置摄像机y位置
+                camera.position.z = 25; //设置摄像机z位置
+                camera.lookAt(new THREE.Vector3(0, 0, 0)); //设置摄像机焦点
+                controls = new THREE.OrbitControls(camera); //摄像机添加监听
+                var geometry = new THREE.PlaneBufferGeometry(100, 100, terrainWidth - 1, terrainDepth - 1); //创建平面
+                geometry.rotateX(-Math.PI / 2); //屏面旋转
+                var vertices = geometry.attributes.position.array; //创建平面顶点数组
+                for (var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3) {
+                    vertices[j + 1] = heightData[i]; //添加平面高度
+                }
+                geometry.computeVertexNormals(); //计算顶点法向量，顶点平滑
+                var dirLight = new THREE.DirectionalLight(0xffffff, 1); //创建平行光
+                dirLight.position.set(10, 10, 5); //光源位置
+                scene.add(dirLight); //场景添加灯光
+                renderer = new THREE.WebGLRenderer(); //新建渲染器
+                renderer.setClearColor(0x000000); //设置背景颜色
+                renderer.setPixelRatio(window.devicePixelRatio); //设置设备像素比率
+                renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染窗口大小
+                container.innerHTML = "";
+                container.appendChild(renderer.domElement); //向div中加入子节点，渲染器
+                stats = new Stats(); //设置FPS
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '0px';
+                container.appendChild(stats.domElement); //向div中加入FPS
+                window.addEventListener('resize', onWindowResize, false); //添加事件监听
+            }
+
+            //屏幕自适应方法
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+
+            function initPhysics() {
+
+                var pos = new THREE.Vector3(); //3维向量
+                var quat = new THREE.Quaternion(); //四元数
+                textureLoader = new THREE.TextureLoader(); //纹理加载器
+
+                // Ground创建草地
+                pos.set(0, -0.5, 0);
+                quat.set(0, 0, 0, 1);
+                var ground = createParalellepiped(30, 1, 30, 0, pos, quat, new THREE.MeshPhongMaterial({
+                    color: 0xFFFFFF
+                }));
+                ground.castShadow = true;
+                ground.receiveShadow = true;
+                textureLoader.load("textures/grass.png", function(texture) {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set(10, 10);
+                    ground.material.map = texture;
+                    ground.material.needsUpdate = true;
+                });
+                collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+                dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+                broadphase = new Ammo.btDbvtBroadphase();
+                solver = new Ammo.btSequentialImpulseConstraintSolver();
+                physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+                physicsWorld.setGravity(new Ammo.btVector3(0, -9.8, 0));
+                physicsWorld.addRigidBody(groundbody);
+            }
+
+            //128，128，-2，8
+            function generateHeight(width, depth, minHeight, maxHeight) {
+                var size = width * depth; //128*128
+                var data = new Float32Array(size);
+                var hRange = maxHeight - minHeight; //10
+                var w2 = width / 2; //64
+                var d2 = depth / 2; //64
+                var phaseMult = 12;
+                var p = 0;
+                for (var j = 0; j < depth; j++) {
+                    for (var i = 0; i < width; i++) {
+
+                        var radius = Math.sqrt(
+                            Math.pow((i - w2) / w2, 2.0) +
+                            Math.pow((j - d2) / d2, 2.0)); //Math.pow(a,b),a的b次方
+
+                        var height = (Math.sin(radius * phaseMult) + 1) * 0.5 * hRange + minHeight;
+
+                        data[p] = height;
+
+                        p++;
+                    }
+                }
+
+                return data;
+
+            }
+
+            function createTerrainShape() {
+                var heightScale = 1;
+                var upAxis = 1;
+                var hdt = "PHY_FLOAT";
+                var flipQuadEdges = false;
+                ammoHeightData = Ammo._malloc(4 * terrainWidth * terrainDepth);
+                var p = 0;
+                var p2 = 0;
+                for (var j = 0; j < terrainDepth; j++) {
+                    for (var i = 0; i < terrainWidth; i++) {
+                        Ammo.HEAPF32[ammoHeightData + p2 >> 2] = heightData[p];
+                        p++;
+                        p2 += 4;
+                    }
+                }
+
+                var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+                    terrainWidth,
+                    terrainDepth,
+                    ammoHeightData,
+                    heightScale,
+                    terrainMinHeight,
+                    terrainMaxHeight,
+                    upAxis,
+                    hdt,
+                    flipQuadEdges
+                );
+                var scaleX = terrainWidthExtents / (terrainWidth - 1);
+                var scaleZ = terrainDepthExtents / (terrainDepth - 1);
+                heightFieldShape.setLocalScaling(new Ammo.btVector3(scaleX, 1, scaleZ));
+
+                heightFieldShape.setMargin(0.05);
+
+                return heightFieldShape;
+
+            }
+
+            function generateObject() {
+
+                var numTypes = 4;
+                var objectType = Math.ceil(Math.random() * numTypes);
+
+                var threeObject = null;
+                var shape = null;
+
+                var objectSize = 3;
+                var margin = 0.05;
+
+                var sx = 3.5;
+                var sy = 3.5;
+                var sz = 3.5;
+
+                var mat = new THREE.MeshPhongMaterial();
+                var texture1 = THREE.ImageUtils.loadTexture("textures/muwen.jpg");
+                mat.map = texture1;
+                var geometry = new THREE.Geometry(); //创建几何对象
+                var cylinder = new THREE.CylinderGeometry(0.15, 0.15, 3, 20, 1); //创建圆柱几何对象
+                var cylinder1 = new THREE.CylinderGeometry(2.5, 2.5, 0.5, 20, 1); //创建陀螺转盘圆盘
+                var cylindermesh = new THREE.Mesh(cylinder, mat); //创建陀螺支柱网络对象
+                var cylinder1mesh = new THREE.Mesh(cylinder1, mat); //创建陀螺转盘网格对象
+                cylindermesh.position.set(0, 0, 0); //设置陀螺支柱位置
+                cylinder1mesh.position.set(0, 0, 0); //设置陀螺转盘位置
+                cylindermesh.updateMatrix(); //更新陀螺支柱的矩阵
+                cylinder1mesh.updateMatrix(); //更新陀螺转盘的矩阵
+                geometry.merge(cylinder, cylindermesh.matrix); //向组合体添加陀螺支柱
+                geometry.merge(cylinder1, cylinder1mesh.matrix); //向组合体添加陀螺转盘
+                threeObject = new THREE.Mesh(geometry, mat); //创建陀螺组合体网格
+                threeObject.position.set(0, 0, 0); //设置陀螺位置
+                var pos = threeObject.position; //获得陀螺位置
+                var capshape = new Ammo.btCapsuleShape(0.15, 2.7); //创建胶囊体碰撞形状
+                var cyshape = new Ammo.btCylinderShape(new Ammo.btVector3(2.5, 0.25, 2.5)); //创建圆柱碰撞形状
+                var transform1 = new Ammo.btTransform(); //创建变换对象
+                transform1.setIdentity(); //初始化变换对象矩阵
+                transform1.setOrigin(new Ammo.btVector3(0, 0, 0)); //设置变换对象矩阵
+                shape = new Ammo.btCompoundShape(); //创建组合碰撞形状
+                shape.addChildShape(transform1, capshape); //向组合碰撞形状添加胶囊碰撞形状
+                shape.addChildShape(transform1, cyshape); //向组合碰撞形状添加圆柱碰撞形状
+                var mass = 10; //创建质量变量
+                var localInertia = new Ammo.btVector3(0, 0, 0); //创建惯性向量
+                shape.calculateLocalInertia(mass, localInertia); //计算惯性
+                var transform = new Ammo.btTransform(); //创建变换对象
+                transform.setIdentity(); //初始化变换对象
+                transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z)); //设置变换对象矩形
+                var motionState = new Ammo.btDefaultMotionState(transform); //刚体运动状态对象
+                var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia); //创建刚体信息
+                rbInfo.set_m_restitution(0.7); //设置恢复系数
+                rbInfo.set_m_friction(0.8); //设置摩擦系数
+                var body = new Ammo.btRigidBody(rbInfo); //创建刚体
+                body.setCenterOfMassTransform(transform); //设置中心点
+                body.setAngularVelocity(new Ammo.btVector3(0, 10, 0)); //设置角速度
+                body.setLinearVelocity(new Ammo.btVector3(0, 0, 0.2)); //设置线速度
+                body.setDamping(0.05, 0.2); //设置阻尼
+                threeObject.userData.physicsBody = body; //获得刚体对象
+                scene.add(threeObject); //向场景中添加陀螺
+                dynamicObjects.push(threeObject); //向物理对象中添加陀螺
+                physicsWorld.addRigidBody(body); //向物理世界中添加刚体
+            }
+
+
+
+            function animate() {
+
+                requestAnimationFrame(animate);
+
+                render();
+                stats.update();
+
+            }
+            generateObject();
+
+            function render() {
+
+                var deltaTime = clock.getDelta();
+                updatePhysics(deltaTime);
+
+                processClick();
+
+                controls.update(deltaTime);
+
+                renderer.render(scene, camera);
+
+                time += deltaTime;
+
+            }
+
+            function updatePhysics(deltaTime) {
+
+                physicsWorld.stepSimulation(deltaTime, 10);
+
+                // Update objects
+                for (var i = 0, il = dynamicObjects.length; i < il; i++) {
+                    var objThree = dynamicObjects[i];
+                    var objPhys = objThree.userData.physicsBody;
+                    var ms = objPhys.getMotionState();
+                    if (ms) {
+
+                        ms.getWorldTransform(transformAux1);
+                        var p = transformAux1.getOrigin();
+                        var q = transformAux1.getRotation();
+                        objThree.position.set(p.x(), p.y(), p.z());
+                        objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+
+                    }
+                }
+            }
+
+            function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
+
+                var threeObject = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz, 1, 1, 1), material); //创建盒子
+                var shape = new Ammo.btBoxShape(new Ammo.btVector3(sx * 0.5, sy * 0.5, sz * 0.5));
+                shape.setMargin(margin);
+
+                groundbody = createRigidBody(threeObject, shape, mass, pos, quat);
+
+                return threeObject;
+
+            }
+
+            function createRigidBody(threeObject, physicsShape, mass, pos, quat) {
+
+                threeObject.position.copy(pos);
+                threeObject.quaternion.copy(quat);
+
+                var transform = new Ammo.btTransform();
+                transform.setIdentity();
+                transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+                transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+                var motionState = new Ammo.btDefaultMotionState(transform);
+
+                var localInertia = new Ammo.btVector3(0, 0, 0);
+                physicsShape.calculateLocalInertia(mass, localInertia);
+
+                var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
+                //rbInfo.m_restitution=0.7;
+                //rbInfo.set_m_restitution(0.7);
+                rbInfo.set_m_friction(0.9);
+                rbInfo.set_m_friction(0.8);
+                var body = new Ammo.btRigidBody(rbInfo);
+
+                threeObject.userData.physicsBody = body;
+
+                scene.add(threeObject);
+
+                if (mass > 0) {
+                    dynamicObjects.push(threeObject);
+                    body.setActivationState(4);
+                }
+
+
+
+                return body;
+            }
+
+            function initInput() {
+
+                window.addEventListener('mousedown', function(event) {
+
+                    if (!clickRequest) {
+
+                        mouseCoords.set(
+                            (event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1
+                        );
+
+                        clickRequest = true;
+
+                    }
+
+                }, false);
+
+            }
+
+            function processClick() {
+
+                if (clickRequest) {
+
+                    raycaster.setFromCamera(mouseCoords, camera);
+
+                    // Creates a ball
+                    var ballMass = 10;
+                    var ballRadius = 0.4;
+
+                    var ball = new THREE.Mesh(new THREE.SphereGeometry(ballRadius, 18, 16), ballMaterial);
+                    ball.castShadow = true;
+                    ball.receiveShadow = true;
+                    var ballShape = new Ammo.btSphereShape(ballRadius);
+                    ballShape.setMargin(margin);
+                    pos.copy(raycaster.ray.direction);
+                    pos.add(raycaster.ray.origin);
+                    quat.set(0, 0, 0, 1);
+                    var ballBody = createRigidBody(ball, ballShape, ballMass, pos, quat);
+                    ballBody.setFriction(0.5);
+
+                    pos.copy(raycaster.ray.direction);
+                    pos.multiplyScalar(14);
+                    ballBody.setLinearVelocity(new Ammo.btVector3(pos.x, pos.y, pos.z));
+                    scene.add(ball);
+                    dynamicObjects.push(ball);
+                    physicsWorld.addRigidBody(ballBody);
+
+                    clickRequest = false;
+
+                }
+
+            }
+        })
+    </script>
+
+</body>
+
+</html>

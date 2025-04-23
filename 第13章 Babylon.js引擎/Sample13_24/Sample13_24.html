@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>例子发射器</title>
+    <script src="bulid/babylon.custom.js"></script>
+    <script src="bulid/pep.min.js"></script>
+    <script src="bulid/dat.gui.min.js"></script>
+    <script src="bulid/cannon.js"></script>
+    <script src="bulid/Oimo.js"></script>
+    <script src="bulid/earcut.min.js"></script>
+    <script src="bulid/babylon.js"></script>
+    <script src="bulid/babylon.inspector.bundle.js"></script>
+    <script src="bulid/babylonjs.materials.min.js"></script>
+    <script src="bulid/babylonjs.proceduralTextures.min.js"></script>
+    <script src="bulid/babylonjs.postProcess.min.js"></script>
+    <script src="bulid/babylonjs.loaders.js"></script>
+    <script src="bulid/babylonjs.serializers.min.js"></script>
+    <script src="bulid/babylon.gui.min.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        
+        #fpsLabel {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: default;
+            z-index: 10;
+            background-color: #7283a0;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        #fpsText {
+            position: absolute;
+            left: 10px;
+            top: 50px;
+            cursor: default;
+            z-index: 10;
+            background-color: #7283a0;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: 'Montserrat';
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            // 从上面的HTML中取得canvas元素
+            var canvas = document.getElementById("renderCanvas");
+            // 加载BABYLON 3D引擎
+            var engine = new BABYLON.Engine(canvas, true);
+            // 发射器形状
+            var object;
+            // 发射器类型
+            var emittertype;
+            // 粒子系统
+            var particleSystem;
+            // GUI标签
+            var advancedTexture;
+            // 场景
+            var scene;
+            // 灯光
+            var light0;
+            // 相机
+            var camera;
+            // 发射器类型标志位
+            var etype = 0;
+
+            // 创建场景
+            var createScene = function() {
+                scene = new BABYLON.Scene(engine);
+
+                // Setup environment
+                light0 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 2, 8), scene); // 创建点光源
+                camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", -Math.PI / 2, Math.PI / 4, 20,
+                    new BABYLON.Vector3(0, 0, 0), scene); // 摄像机
+                camera.attachControl(canvas, true); // 相机监听
+                // 创建粒子系统
+                createparticleSystem();
+                // 创建GUI
+                buildUI();
+                // 发射器旋转
+                scene.registerBeforeRender(function() {
+                    object.rotation.z += 0.01;
+                });
+                return scene;
+            }
+
+            // 创建粒子系统
+            var createparticleSystem = function() {
+                if (particleSystem) {
+                    particleSystem.dispose();
+                }
+                // 创建粒子系统
+                particleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
+                // 粒子纹理
+                particleSystem.particleTexture = new BABYLON.Texture("pic/flare.png", scene);
+                // 粒子颜色，在color1和color2随机
+                particleSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
+                particleSystem.color2 = new BABYLON.Color4(0.2, 0.5, 1.0, 1.0);
+                particleSystem.colorDead = new BABYLON.Color4(0, 0, 0.2, 0.0); // 粒子死亡颜色
+                // 粒子尺寸，在最小和最大间随机
+                particleSystem.minSize = 0.1;
+                particleSystem.maxSize = 0.5;
+                // 粒子存活时间，随机
+                particleSystem.minLifeTime = 0.3;
+                particleSystem.maxLifeTime = 1.5;
+                // 发射粒子数，每帧发射最大粒子数
+                particleSystem.emitRate = 2000;
+                // 发射速度和整个粒子系统速度
+                particleSystem.minEmitPower = 1;
+                particleSystem.maxEmitPower = 3;
+                particleSystem.updateSpeed = 0.005;
+                // 创建发射器
+                createEmitter();
+                // 启动粒子系统
+                particleSystem.start();
+            }
+
+            // 创建GUI
+            var buildUI = function() {
+                if (advancedTexture) { //如果标签存在
+                    advancedTexture.dispose(); //标签释放
+                }
+                advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI"); //创建UI标签
+
+                var leftPanel = new BABYLON.GUI.StackPanel(); //创建2D面板容器
+                leftPanel.width = "300px";
+                leftPanel.isVertical = true;
+                leftPanel.paddingLeft = "20px";
+                leftPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                leftPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+                leftPanel.fontSize = 16;
+                advancedTexture.addControl(leftPanel);
+                //单选按钮
+                var addRadio = function(text, parent, index, ischeck) {
+                    var button = new BABYLON.GUI.RadioButton();
+                    button.width = "20px";
+                    button.height = "20px";
+                    button.color = "white";
+                    button.background = "green";
+                    button.isChecked = ischeck;
+                    // 按钮监听
+                    button.onIsCheckedChangedObservable.add(function(state) {
+                        if (state) {
+                            if (index == 0) {
+                                etype = 0;
+                                object.dispose();
+                                createparticleSystem();
+                                console.log(etype + "  :" + index);
+                            } else if (index == 1) {
+                                etype = 1;
+                                object.dispose();
+                                createparticleSystem();
+                                console.log(etype + "  :" + index);
+                            } else if (index == 2) {
+                                etype = 2;
+                                object.dispose();
+                                createparticleSystem();
+                                console.log(etype + "  :" + index);
+                            }
+                        }
+                    });
+                    // 将按钮和文字添加进面板，创建可用于呈现标题的堆栈面板
+                    var header = BABYLON.GUI.Control.AddHeader(button, text, "100px", {
+                        isHorizontal: true,
+                        controlFirst: true
+                    });
+                    header.height = "30px"; // 设置面板高度
+                    // 将面板添加进GUI容器
+                    parent.addControl(header);
+                }
+                addRadio("盒子发射器", leftPanel, 0, true); //创建按钮
+                addRadio("球形发射器", leftPanel, 1, false);
+                addRadio("锥形发射器", leftPanel, 2, false);
+            }
+
+            // 创建发射器
+            var createEmitter = function() {
+                if (etype == 0) { // 发射器类型标志位为0
+                    createboxemitter(); // 创建盒子发射器
+                } else if (etype == 1) { // 发射器类型标志位为1
+                    createsphereemitter(); // 创建球形发射器
+                } else if (etype == 2) { // 发射器类型标志位为2
+                    createconemitter(); // 创建锥形发射器
+                }
+            }
+
+            // 创建盒子发射器
+            var createboxemitter = function() {
+                //创建盒子
+                object = BABYLON.MeshBuilder.CreateBox("box", {
+                    width: 2,
+                    height: 4,
+                    depth: 5
+                }, scene);
+                object.material = new BABYLON.StandardMaterial("mat", scene); //标准材质
+                object.material.wireframe = true; //启用线框模式
+                // Where the particles come from
+                particleSystem.emitter = object; // 粒子系统发射器形状为盒子
+                /******* 粒子系统发射器类型为盒子发射器 参数如下 ********/
+                // direction1：Vector3，方向1
+                // direction2：Vector3，方向2
+                // minEmitBox：Vector3，最小发射位置
+                // maxEmitBox：Vector3，最大发射位置
+                emittertype = particleSystem.createBoxEmitter(new BABYLON.Vector3(-5, 2, 1),
+                    new BABYLON.Vector3(5, 2, -1), new BABYLON.Vector3(-1, -2, -2.5), new BABYLON.Vector3(1, 2, 2.5));
+                // 返回的boxEmitter对象可用于更改这些属性的值。
+                // emittertype.direction1 = new BABYLON.Vector3(-5, 2, 1);
+                // emittertype.direction2 = new BABYLON.Vector3(5, 2, 1);
+                // emittertype.minEmitBox = new BABYLON.Vector3(-2, -3, -4);
+                // emittertype.maxEmitBox = new BABYLON.Vector3(2, 3, 4);
+            }
+
+            // 创建球形发射系统
+            var createsphereemitter = function() {
+                // 创建球体
+                object = BABYLON.MeshBuilder.CreateSphere("sphere", {
+                    diameter: 4, //半径
+                    segments: 8 //分段数
+                }, scene);
+                object.material = new BABYLON.StandardMaterial("mat", scene); //标准材质
+                object.material.wireframe = true; //启用线框
+                // Where the particles come from
+                particleSystem.emitter = object; // 粒子发射器为球体
+                /******* 发射器类型为球体发射器 ********/
+                emittertype = particleSystem.createSphereEmitter(2);
+                //参数
+                // radius：数字，半径
+                // direction1：Vector3，
+                // direction2：Vector3，
+                // emittertype = particleSystem.particleSystem.createDirectedSphereEmitter(1.2,
+                //     new BABYLON.Vector3(1, 1, 1), new BABYLON.Vector3(2, 8, 2));
+                emittertype.radiusRange = 1; //发射范围，0是球表面，1是整个球
+                //返回的sphereEmitter对象可用于更改这些属性的值。
+                // emittertype.radius = 3.4;
+                // emittertype.direction1 = new BABYLON.Vector3(-5, 2, 1); 
+                // emittertype.direction2 = new BABYLON.Vector3(5, 2, -1);
+            }
+
+            // 创建锥形发射系统
+            var createconemitter = function() {
+                //创建圆锥
+                var radius = 2;
+                var angle = Math.PI / 3;
+                var height = radius / Math.tan(angle / 2);
+                object = BABYLON.MeshBuilder.CreateCylinder("cone", {
+                    diameterBottom: 0, //底部直径
+                    diameterTop: 2 * radius, //顶部直径
+                    height: height //高度
+                }, scene);
+                object.position.y = height / 2;
+                object.setPivotPoint(new BABYLON.Vector3(0, -height / 2, 0)); //设置枢纽
+                object.material = new BABYLON.StandardMaterial("mat", scene); //标准材质
+                object.material.wireframe = true; //启动线框
+                // Where the particles come from
+                particleSystem.emitter = object; // 粒子系统发射器为圆锥
+                /******* 粒子系统发射器类型为锥形发射器 ********/
+                // radius：Number;
+                // angle：以弧度为单位测量的数字，锥体的顶角。创建的圆锥轴沿Y轴，顶点在底部。
+                emittertype = particleSystem.createConeEmitter(radius, angle);
+                emittertype.radiusRange = 1; //粒子半径发射范围，值0表示仅在曲面上，而值1表示沿半径
+                emittertype.heightRange = 1; //粒子高度发射范围，值0表示仅在顶部表面上，而值1表示在整个高度上。
+                // 返回的coneEmitter对象可用于更改这些属性的值。
+                // emittertype.radius = 3.4;
+                // emittertype.angle = Math.PI / 2;
+            }
+
+            scene = createScene();
+            const fpsLabel = document.getElementById('fpsLabel');
+            //新建一个循环不停的渲染场景
+            engine.runRenderLoop(function() {
+                scene.render();
+                fpsLabel.innerHTML = `&nbspFPS&nbsp<br>&nbsp
+                ${Math.floor(engine.getFps())}`;
+            });
+            //新建监听事件使得场景自适应屏幕大小变化
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <span class="label" id="fpsLabel">FPS</span>
+    <canvas id="renderCanvas"></canvas>
+</body>
+
+</html>

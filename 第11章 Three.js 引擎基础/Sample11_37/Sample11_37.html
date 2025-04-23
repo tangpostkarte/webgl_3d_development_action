@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+    body {
+        margin: 0px;
+        background-color: #050505;
+        color: #fff;
+        overflow: hidden;
+    }
+
+    a { color: #e00 }
+
+
+    #canvas0 {
+        position: absolute;
+        background-color: #ffffff;
+        top: 10%;
+        right: 80%;
+        z-index: 6000;
+        display: none;
+        cursor: crosshair;
+    }
+    #canvas1 {
+        position: absolute;
+        background-color: #000000;
+        top: 10%;
+        right: 80%;
+        display: none;
+        z-index: 6000;
+        cursor: crosshair;
+    }
+    #canvas2 {
+        position: absolute;
+        background-color: #000000;
+        top: 10%;
+        right: 80%;
+        display: none;
+        z-index: 6000;
+        cursor: crosshair;
+    }
+    #canvas3 {
+        position: absolute;
+        background-color: #000000;
+        top: 10%;
+        right: 80%;
+        display: none;
+        z-index: 6000;
+        cursor: crosshair;
+    }
+    #canvas4 {
+        position: absolute;
+        background-color: #000000;
+        top: 10%;
+
+
+        right: 80%;
+        display: none;
+        z-index: 6000;
+        cursor: crosshair;
+    }
+    #canvas5 {
+        position: absolute;
+        background-color: #000000;
+        top: 10%;
+        right: 80%;
+        display: block;
+        z-index: 6000;
+        cursor: crosshair;
+    }
+</style>
+<head>
+    <title>Sample11_37</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<canvas id="canvas0" height="256" width="256"></canvas>
+<canvas id="canvas1" height="256" width="256"></canvas>
+<canvas id="canvas2" height="256" width="256"></canvas>
+<canvas id="canvas3" height="256" width="256"></canvas>
+<canvas id="canvas4" height="256" width="256"></canvas>
+<canvas id="canvas5" height="256" width="256"></canvas>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    var scene;//场景变量
+    var renderer;//新建渲染器变量
+    var camera;//摄像机变量
+    var startPosition=new THREE.Vector2();//新建储存开始坐标二维位置的变量
+    var mesh=new Array(6);//球体
+    var mixer;
+    var paint = false;//画笔移动标志位
+    var moveFlag=false;//鼠标移动标志位
+    var drawingCanvas=new Array(6);//canvas对象数组  这是画板
+    var rgbVector3Array=new Array(6);
+    var mousePoint=new THREE.Vector2();
+    var axis=[];//新建容器
+    var ray;//新建射线拾取
+    var canvas=new Array(6);//canvas 2dcontext数组  这是画笔
+    var material=new Array(6);//纹理变量
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();//初始化场景
+        addControls();//添加鼠标控制
+        addLight();
+        addSupport();
+        addMesh();//添加物体
+        canvasDrawing();
+        renderScene();//进行渲染
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+    }
+
+    //获取对应的canvas 并将其作为纹理图添加进对应材质中
+    function canvasDrawing() {
+        for(var i=0;i<6;i++)
+        {
+            //网页元素canvas
+            drawingCanvas[i] = document.getElementById( 'canvas'+i );
+            //console.log("drawingcanvas",drawingCanvas[i]);
+            //设置当前canvas的上下文状态  即绘制状态2d 3d
+            canvas[i]= drawingCanvas[i].getContext( '2d' );
+            canvas[i].fillStyle = rgbVector3Array[i];
+            //绘制填充矩形
+            canvas[i].fillRect( 0, 0, 256, 256 );
+            //将canvas的内容作为纹理添加到材质中
+            material[i].map = new THREE.Texture( drawingCanvas[i] );
+            //更新纹理图时自动获取canvas内容
+            material[i].map.needsUpdate = true;
+        }
+    }
+    //绘制canvas  并实时更新材质贴图
+    function draw(drawContext, x, y,i) {
+        console.log("drawContext",drawContext);
+        drawContext.moveTo( startPosition.x, startPosition.y );//开始位置
+        drawContext.strokeStyle = '#000000';//画笔颜色
+        drawContext.lineTo( x, y );//终止位置
+        drawContext.stroke();//完成绘制
+        startPosition.set( x, y );//更新位置
+        material[i].map.needsUpdate = true;//更新纹理
+    }
+    function addSupport() {
+        ray=new THREE.Raycaster();//新建射线拾取
+    }
+
+    //像场景中添加光源
+    function addLight() {
+        var spotLight = new THREE.SpotLight("#ffffff"); 	//创建聚光灯光源
+        spotLight.position.set(camera.position);
+        scene.add(spotLight);
+        var ambientLight=new THREE.AmbientLight(0x404040);//创建环境光
+        scene.add(ambientLight);
+    }
+    //添加鼠标控制____场景中的鼠标控制监听
+    function addControls() {
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.addEventListener( 'change', renderScene ); //添加监听
+        controls.minDistance = 3;//设置拉伸的最小距离
+        controls.maxDistance = 1000;//设置拉伸的最大距离
+        controls.enablePan = true;//是否可以平移
+        controls.zoomSpeed=3.0;//设置缩放比例
+        controls.addEventListener('change',function () {
+            moveFlag=true;//如果使用鼠标移动物体，标志位置反
+        });
+
+        window.addEventListener('mousedown',function () {
+            moveFlag=false;//如果鼠标点击，标志位置反
+        },false);
+
+        window.addEventListener('mouseup',function () {
+            mouseCollect();
+        });
+
+        setTimeout(function () {
+            window.addEventListener('mousemove',mouseMove);
+            window.addEventListener('touchmove',mouseMove);//移动设备的监听
+        },70);
+    }
+
+    //鼠标点击plane
+    function mouseCollect() {
+        ray.setFromCamera(mousePoint,camera);//变更矩阵
+        var interSection=ray.intersectObjects(scene.children);//设置监听模型
+        setTimeout(function () {
+            if(interSection.length>0)
+            {
+                var name=interSection[0].object.name;
+                canvasChange(name);//变更canvas 改变当前展示canvas
+                drawingCanvas[name].addEventListener( 'mousedown', function( e ) {
+                    //更改绘画标志位
+                    paint = true;
+                    //设置画笔起始位置
+                    startPosition.set( e.offsetX, e.offsetY );
+                } );
+                //canvas中鼠标移动监听
+                drawingCanvas[name].addEventListener( 'mousemove', function( e ) {
+                    if(paint){
+                        draw( canvas[name], e.offsetX, e.offsetY,(name) );
+                    }
+                } );
+                //鼠标up监听  更改绘画状态位
+                drawingCanvas[name].addEventListener( 'mouseup', function( e ) {
+
+                    paint = false;
+                } );
+                //鼠标离开canvas监听  更改绘画状态位
+                drawingCanvas[name].addEventListener( 'mouseleave', function( e ) {
+                    paint = false;
+                } );
+                console.log("interSection[0].object.name:"+interSection[0].object.name);
+            }
+        },100);
+
+    }
+
+    //根据点击canvas的name获取canvas更改展示状态
+    function canvasChange(name) {
+
+        for(var i=0;i<6;i++)
+        {
+
+            if(name!=i)
+            {
+                console.log(i+"||i");
+                document.getElementById("canvas"+i).style.display = "none";
+            }else
+            {
+                console.log(name+"||name");
+                document.getElementById("canvas"+name).style.display = "block";
+            }
+        }
+    }
+    
+    function mouseMove(event) {
+        if(!mesh)//如果模型不存在
+        {
+            return;
+        }else
+        {
+            var x, y;
+            if ( event.changedTouches ) {//获得移动设备的触摸改变的值
+
+                x = event.changedTouches[ 0 ].pageX;//获得x坐标
+                y = event.changedTouches[ 0 ].pageY;//获得y坐标
+
+            } else {
+
+                x = event.clientX;//获得鼠标的x坐标
+                y = event.clientY;//获得y坐标
+
+            }
+            mousePoint.x = ( x / window.innerWidth ) * 2 - 1;//转变为笛卡尔坐标
+            //console.log("x:"+x+"|y:"+y);
+            mousePoint.y = - ( y / window.innerHeight ) * 2 + 1;
+
+
+        }
+    }
+    
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+
+
+    function initScene() {
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z =700;
+
+
+    }
+
+    function getColor(){//随机颜色方法
+        var colorElements = "0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f";
+        var colorArray = colorElements.split(",");
+        var color ="#";
+        for(var i =0;i<6;i++){
+            color+=colorArray[Math.floor(Math.random()*16)];
+        }
+        return color;
+    }
+
+    function addMesh(){//添加材质和可视化界面的方法
+        var meshLength=200;
+
+        for(var i=0;i<material.length;i++)//设置六个面的纹理并保存
+        {
+            rgbVector3Array[i]=getColor();
+            material[i] = new THREE.MeshBasicMaterial({color: rgbVector3Array[i]});
+            material[i].side = THREE.DoubleSide;
+            mesh[i]=new THREE.Mesh(new THREE.PlaneGeometry(meshLength,meshLength),material[i]);
+
+        }
+
+        mesh[0].position.x=0;
+        mesh[0].position.y=0;
+        mesh[0].position.z=0;
+        mesh[0].name='0';
+        scene.add(mesh[0]);
+        mesh[1].position.x=0;
+        mesh[1].position.y=0;
+        mesh[1].position.z=-200;
+        mesh[1].name='1';
+        scene.add(mesh[1]);
+        mesh[3].rotation.x=-Math.PI/2;
+        mesh[3].position.x=0;
+        mesh[3].position.y=100;
+        mesh[3].position.z=-100;
+        mesh[3].name='3';
+        scene.add(mesh[3]);
+        mesh[4].rotation.x=-Math.PI/2;
+        mesh[4].position.x=0;
+        mesh[4].position.y=-100;
+        mesh[4].position.z=-100;
+        mesh[4].name='4';
+        scene.add(mesh[4]);
+        mesh[5].rotation.y=-Math.PI/2;
+        mesh[5].position.x=-100;
+        mesh[5].position.y=0;
+        mesh[5].position.z=-100;
+        mesh[5].name='5';
+        scene.add(mesh[5]);
+        mesh[2].rotation.y=-Math.PI/2;
+        mesh[2].position.x=100;
+        mesh[2].position.y=0;
+        mesh[2].position.z=-100;
+        mesh[2].name='2';
+        scene.add(mesh[2]);
+//        axis[0]=new THREE.Object3D();//不加鼠标控制，模型自动旋转的方法
+//        mesh.forEach(function (t) {
+//            axis[0].add(t);
+//        });
+//        scene.add(axis[0]);
+    }
+
+
+    function renderScene() {
+//        axis.rotation.x += 0.01;//不加鼠标控制，模型自动旋转的方法
+//        axis.rotation.y += 0.01;
+        renderer.render( scene, camera );
+        requestAnimationFrame(renderScene);
+    }
+
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

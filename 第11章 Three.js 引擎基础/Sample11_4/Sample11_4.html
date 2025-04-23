@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_4</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+		var planeGeometry = new THREE.PlaneGeometry(60, 60);//新建长方形平面
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0xcccccc});//新建平面使用的材质
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);//新建网格对象
+        plane.rotation.x = -0.5 * Math.PI;//设置平面的旋转角度
+        plane.position.x = -10;//设置长方形平面的位置-10 -5  -2
+        plane.position.y = -5;
+        plane.position.z = -2;
+        scene.add(plane);//将长方形平面添加到场景中
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建透视投影摄像机
+        camera.position.x = 50;//设置摄像机位置
+        camera.position.y = 20;
+        camera.position.z = 50;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		function addBox(length,translateX,translateY,translateZ){//添加几何对象的方法
+			var boxlength=1.5;//正方体边长
+			var boxGeometry = new THREE.BoxGeometry(boxlength, boxlength, boxlength);//新建正方体
+			var material=new THREE.MeshNormalMaterial();//创建法向量材质
+			var rolTotal=Math.floor(length/2/boxlength);//
+			for(var i=0;i<rolTotal;i++){//遍历所有几何对象
+				for(var j=0;j<rolTotal;j++)
+				{
+					var mesh=new THREE.Mesh(boxGeometry, material);//创建网格对象
+					mesh.position.x=-length/2+boxlength/2+2*i*boxlength+translateX;//确定网格对象的位置
+					mesh.position.y=boxlength/2+translateY;
+					mesh.position.z=-length/2+boxlength/2+2*j*boxlength+translateZ;
+					scene.add(mesh);//将网格对象添加到场景中
+				}
+			}
+		}
+		var controls = new function () {
+            this.currentCamera = "透视投影摄像机";
+            this.changeCamera = function () {
+                if (camera instanceof THREE.PerspectiveCamera) {
+                    camera = new THREE.OrthographicCamera(window.innerWidth / -16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / -16, -200, 500);
+                    camera.position.x = 50;
+                    camera.position.y = 20;
+                    camera.position.z = 50;
+                    camera.lookAt(scene.position);
+                    this.currentCamera = "正交投影摄像机";
+                } else {
+                    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                    camera.position.x = 50;
+                    camera.position.y = 20;
+                    camera.position.z = 50;
+                    camera.lookAt(scene.position);
+                    this.currentCamera = "透视投影摄像机";
+                }
+            };
+        };
+		var gui = new dat.GUI();
+		
+        gui.add(controls, 'changeCamera',"切换摄像机");
+        gui.add(controls, 'currentCamera',"当前摄像机类型").listen();
+		addBox(60,plane.position.x,plane.position.y,plane.position.z);//添加几何对象
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();//渲染画面
+		function renderScene() {
+
+            renderer.render(scene, camera);//渲染当前画面
+            requestAnimationFrame(renderScene);//请求绘制下一帧
+        }}
+	window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

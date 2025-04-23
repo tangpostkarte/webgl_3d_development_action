@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+    body {
+        margin: 0px;
+        background-color: #050505;
+        color: #fff;
+        overflow: hidden;
+    }
+    #importFile {
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: 1;
+    }
+    label.file{
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        color: var(hsla(242, 86%, 88%, 1));
+        font-size: 1.25em;
+        font-weight: 700;
+        box-shadow: 0 20px 60px var(hsla(0, 0%, 0%, 0.2));
+
+    }
+    a { color: #e00 }
+</style>
+<head>
+    <title>可视化音频</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<label for="importFile" class="file" id="label1"> 打开本地音频文件
+    <input type="file" id="importFile" accept="audio/*" onchange="fileChange()"/>
+</label>
+
+<div id="WebGL-output" style="display: none"></div>
+
+<script type="text/javascript">
+    var file;       //文件Dom对象
+    var fileUrl;    //文件链接
+    function fileChange() {
+        //获取Dom对象
+        file=document.getElementById("importFile").files[0];
+        //创建文件链接
+        fileUrl=URL.createObjectURL(file);
+        //将渲染结果输出到屏幕
+        document.getElementById("WebGL-output").style.display="block";
+        //将打开文件Label隐藏
+        document.getElementById("label1").style.display="none";
+        //添加音频
+        addAudio();
+    }
+    var scene;          //场景变量
+    var renderer;       //新建渲染器变量
+    var camera;         //摄像机变量
+    var fftSize =32;    //音乐数据频域的长度
+    var analyser;       //音乐数据
+    var misicDataArray=new Array(16);   //音乐数据数组
+    var plane;          //地板
+    var dirLight;       //光照
+    var material;       //纹理变量
+    var mesh=[];        //物体数组
+    var tempGeometry=new Array(fftSize);
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+
+        initScene();    //初始化场景
+        addMesh();      //添加物体
+        addControls();  //添加鼠标控制
+        addLight();     //添加灯光
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+    }
+
+    function addAudio() {
+        //创建音频加载
+        var audioLoder=new THREE.AudioLoader();
+        //创建音频监听
+        var listener = new THREE.AudioListener();
+        //创建音频对象
+        var audio = new THREE.Audio( listener );
+        //加载音频
+        audioLoder.load(fileUrl,function (audioBuffer ) {
+            //设置音频数据
+            audio.setBuffer( audioBuffer );
+            //音频循环
+            audio.setLoop( true );
+            //音频播放
+            audio.play();
+        });
+        //音频数据分析,并传入声音和期望的FFT大小
+        analyser = new THREE.AudioAnalyser( audio, fftSize );
+        console.log(analyser.data.length)
+        misicDataArray=analyser.data;
+
+
+        for (var i=0;i<fftSize*0.5;i++)
+        {
+            tempGeometry[i]=new THREE.BoxGeometry( 12, misicDataArray[i]/4 ,12);
+            material=new THREE.MeshPhongMaterial({color: getColor()});
+
+            mesh[i]=new THREE.Mesh(tempGeometry[i],material) ;
+            mesh[i].position.x=20*i-160;
+            mesh[i].castShadow=true;
+            mesh[i].rotation.y= Math.PI/4;
+            scene.add(mesh[i]);
+        }
+        renderScene();//进行渲染
+
+    }
+
+    function addLight() {
+        var target=new THREE.Object3D();
+        target.position=new THREE.Vector3(0,0,0);
+
+        //生成一个方向光，模拟太阳光
+        var pointColor = "#bbbbbb";
+        dirLight = new THREE.DirectionalLight(pointColor);
+        dirLight.position.set(0, 50, 50);
+        dirLight.castShadow = true;
+        dirLight.target = plane;
+
+        dirLight.shadow.CameraNear = 0.1;
+        dirLight.shadow.CameraFar = 100;
+        dirLight.shadow.CameraTop = 200;
+        dirLight.shadow.CameraBottom = 0;
+        dirLight.shadow.MapWidth = 2048;
+        dirLight.shadow.MapHeight = 2048;
+        var dirLight0=dirLight.clone();
+        dirLight0.position.set(0, 50, -50);
+        scene.add(dirLight0);
+        scene.add(dirLight);
+        var ambientLight=new THREE.AmbientLight("#0c0c0c");//创建环境光
+        scene.add(ambientLight);
+    }
+
+    //添加鼠标控制
+    function addControls() {
+
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.addEventListener( 'change', renderScene ); //添加监听
+        controls.enablePan = true;//是否可以平移
+        controls.enableZoom =true;//设置缩放比例
+        controls.maxPolarAngle = Math.PI*4/9;//控制角度
+
+    }
+
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );//重新设置渲染窗口
+    }
+
+
+    function initScene() {
+
+        scene = new THREE.Scene();//新建场景
+
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: true } );
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enable=true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z =270;
+        camera.position.y =40;
+        camera.lookAt(new THREE.Vector3(0,0,0));
+
+    }
+
+    //添加材质和可视化界面的方法
+    function addMesh(){
+
+        var planeGeometry = new THREE.PlaneGeometry(500,500);
+        var planeMaterial = new THREE.MeshLambertMaterial({color:0xaaaaaa});
+        plane= new THREE.Mesh(planeGeometry,planeMaterial);
+
+        plane.rotation.x=-Math.PI/2;
+        plane.position.x = 0;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        plane.receiveShadow=true;
+        scene.add(plane);
+    }
+
+    //随机颜色方法
+    function getColor(){
+        var colorElements = "0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f";
+        var colorArray = colorElements.split(",");
+        var color ="#";
+        for(var i =0;i<6;i++){
+            color+=colorArray[Math.floor(Math.random()*16)];
+        }
+        return color;
+    }
+
+    //渲染场景的方法
+    function renderScene() {
+
+        //更新音乐数据
+        analyser.getFrequencyData();
+        misicDataArray=analyser.data;
+
+        //更改物体Y轴方向上的缩放比例
+        for (var i=0;i<fftSize*0.5;i++)
+        {
+            if(misicDataArray[i]/4==0)
+            {
+                misicDataArray[i]=4;
+            }
+            mesh[i].scale.y=misicDataArray[i]/4;
+            mesh[i].position.y=0;
+        }
+
+        renderer.render( scene, camera );
+        requestAnimationFrame(renderScene);
+    }
+
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

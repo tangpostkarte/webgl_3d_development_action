@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="bulid/babylon.custom.js"></script>
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var engine = new BABYLON.Engine(canvas, true);
+
+        var createScene = function () {
+
+            // 创建场景和摄像机
+            var scene = new BABYLON.Scene(engine);
+
+            //创建相机
+            var camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 0, new BABYLON.Vector3(0, 0, -0), scene);
+            camera.setPosition(new BABYLON.Vector3(0,30,35));
+            camera.attachControl(canvas, true);
+
+            //创建光照
+            var light = new BABYLON.PointLight("light", new BABYLON.Vector3(30,30,20), scene);
+            light.intensity = 0.7;
+
+            //网格对象数组
+            var meshArray=[];
+            //立方体
+            meshArray.push(BABYLON.MeshBuilder.CreateBox("box", {height:6,width:6,depth:6}, scene))
+            //球体
+            meshArray.push(BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 5}, scene))
+            //圆柱或者圆锥
+            meshArray.push(BABYLON.MeshBuilder.CreateCylinder("cone", {diameterTop: 0,diameterBottom:6,height:5, tessellation: 8}, scene))
+            //平面
+            meshArray.push( BABYLON.MeshBuilder.CreatePlane("plane", {width: 4,height:4,sideOrientation:BABYLON.Mesh.DOUBLESIDE}, scene))
+            //曲面细分多边形
+            meshArray.push(BABYLON.MeshBuilder.CreateDisc("disc", {radius:4,tessellation: 3,sideOrientation:BABYLON.Mesh.DOUBLESIDE}, scene))
+            //圆环节
+            meshArray.push(BABYLON.MeshBuilder.CreateTorusKnot("tk", {}, scene));
+            //圆环
+            meshArray.push(BABYLON.MeshBuilder.CreateTorus("torus", {diameter:5,thickness:1.5}, scene));
+            //地面
+            meshArray.push(BABYLON.MeshBuilder.CreateGround("gd", {width: 6,height:6,subdivsions:4},scene));
+
+
+            //创建地板的材质
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            //创建地板
+            var ground =BABYLON.MeshBuilder.CreateGround("gd", {width: 40,height:15 ,subdivsions: 4}, scene);
+            ground.material = groundMaterial;
+
+
+            //创建网格对象的材质
+            var meshMaterial=new BABYLON.StandardMaterial("meshMaterial",scene)
+            //遍历网格对象数组
+            for(var i=0;i<meshArray.length;i++){
+                meshArray[i].material=meshMaterial;
+                meshArray[i].material.diffuseColor=new BABYLON.Color3(1, Math.random(), Math.random());
+                meshArray[i].position.x=-16+Math.floor(i/2)*10;
+                meshArray[i].position.y=4;
+                meshArray[i].position.z=(i%2==0)?-4:6;
+            }
+
+            return scene;
+        
+        };
+        
+        var scene = createScene()
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();}
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

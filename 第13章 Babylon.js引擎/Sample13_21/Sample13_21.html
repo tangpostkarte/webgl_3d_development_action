@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="bulid/babylon.custom.js"></script>
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var engine = new BABYLON.Engine(canvas, true);
+
+        var createScene = function () {
+
+            //创建场景
+            var scene = new BABYLON.Scene(engine);
+            //相机
+            var camera = new BABYLON.ArcRotateCamera("Camera",0,0,20,BABYLON.Vector3.Zero(),scene);
+            camera.setPosition(new BABYLON.Vector3(0,0,20));
+            camera.attachControl(canvas, true);
+
+            //光照
+            var light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(-1, 1, 0), scene);
+            light.intensity=1.5;
+
+            //创建材质
+            var sphereMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            //高光部分
+            sphereMaterial.specularPower=10;
+            //漫反射纹理
+            sphereMaterial.diffuseTexture=new BABYLON.Texture("textures/Earth.png",scene,false,false);
+            //高光纹理
+            sphereMaterial.specularTexture=new BABYLON.Texture("textures/EarthSpec.png", scene,false,false);
+            //法向纹理实现凹凸效果
+            sphereMaterial.bumpTexture = new BABYLON.Texture("textures/EarthNormal.png", scene,false,false);
+
+        
+            //创建球体
+            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:10}, scene);
+            //设置球体材质
+            sphere.material=sphereMaterial;
+
+
+
+            var alpha = 0;
+            scene.registerBeforeRender(function () {
+                alpha += 0.01;
+                sphere.rotation.y=alpha;
+
+            });
+
+            return scene;
+        
+        };
+        
+        var scene = createScene()
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

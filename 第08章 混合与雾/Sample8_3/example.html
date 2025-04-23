@@ -1,0 +1,172 @@
+<html>
+	<head>
+  <title>Spinning WebGL Box</title><!--标题-->
+	<script type="text/javascript" src="js/Matrix.js"></script>
+	<script type="text/javascript" src="js/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/GLUtil.js"></script>
+	<script type="text/javascript" src="js/ObjObject.js"></script>
+	<script type="text/javascript" src="js/loadObject.js"></script>
+	<script type="text/javascript" src="js/LoadObjUtil.js"></script>
+	<script type="text/javascript" src="js/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/TextureRect.js"></script>
+	
+	<script>
+	    //GLES上下文
+	    var gl;
+		var tex;
+		var masss;
+		var masss1;
+		var masss2;
+		var masss3;
+		var masss4;
+		var rex=0;
+		var canvas;
+		var TOUCH_SCALE_FACTOR = 180.0/2000;//角度缩放比例
+	    //变换矩阵管理类对象
+	    var ms=new MatrixState();
+		//着色器程序列表，集中管理
+		var shaderProgArray=new Array();		
+		var mPreviousY;//上次的触控位置Y坐标
+		var mPreviousX;//上次的触控位置X坐标
+		var down=false;//是否按下鼠标
+		function dianji()
+		{
+			document.onmousedown = function(event)
+			{	down=true;//按下鼠标
+				mPreviousX=event.pageX;//获取触控点x坐标
+				mPreviousY=event.pageY;//获取触控点y坐标
+			}
+			document.onmousemove = function(event)//鼠标移动
+			{	
+				if(down)
+				{
+				    var dx = event.pageX- mPreviousX;//计算触控笔X位移
+					rex += dx * TOUCH_SCALE_FACTOR;//设置沿x轴旋转角度
+					//将cx限制在一定范围内
+					rex = Math.max(rex, -200);
+					rex = Math.min(rex, 200);
+				}
+			}
+			document.onmouseup = function(event)
+			{
+				down=false;//抬起鼠标
+			}
+		}
+	
+	
+		function dianji1(){
+            canvas = document.getElementById('bncanvas');
+			canvas.ontouchstart=function(e){
+			down=true;
+			var touch = e.touches[0];
+			//获取当前触控点的坐标，等同于MouseEvent事件的clientX/clientY
+			mPreviousX=touch.clientX;//获取触控点x坐标
+			mPreviousY=touch.clientY;//获取触控点y坐标
+			};
+			canvas.ontouchmove = function(e){
+				e.preventDefault();
+				var touch = e.touches[0];
+				var moveX=touch.clientX;//获取移动点x坐标
+				var moveY=touch.clientY;//获取移动点x坐标			
+				var dx = moveX- mPreviousX;//计算触控笔x位移
+				rex += dx * TOUCH_SCALE_FACTOR;//设置沿x轴旋转角度
+					//将cx限制在一定范围内
+				rex = Math.max(rex, -200);
+				rex = Math.min(rex, 200);
+			};
+			canvas.ontouchup = function(e){
+			down=false;//按下鼠标
+			};
+		}
+	    //初始化的方法
+	    function start()
+	    {
+            //获取3D Canvas
+            var canvas = document.getElementById('bncanvas');
+            //获取GL上下文
+            gl = canvas.getContext('webgl2', { antialias: true });
+            if (!gl) //若获取GL上下文失败
+            {
+                alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                return;
+            }
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(0.3,0.3,0.3,1.0);  
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        
+			//设置投影参数
+	        ms.setProjectFrustum(-1.5,1.5,-1,1,2,1000);
+	        gl.enable(gl.DEPTH_TEST);//开启深度检测
+			//gl.enable(gl.CULL_FACE);
+            //加载着色器程序
+            loadShaderFile("shader/vtrtex.bns",0,0);
+            loadShaderFile("shader/fragment.bns",0,1);
+			loadObjFile("obj/ch.obj",0,0);
+			loadObjFile("obj/pm.obj",1,0);	
+			loadObjFile("obj/qt.obj",2,0);	
+			loadObjFile("obj/cft.obj",3,0);	
+			loadObjFile("obj/yh.obj",4,0);		
+	        //定时绘制画面
+	        setInterval("drawFrame();",50);
+	    }
+	    
+	    //绘制一帧画面的方法
+	    function drawFrame()
+	    {	//设置摄像机
+	        ms.setCamera(rex,150,400,0,0,0,0,1,0);
+				dianji();
+				dianji1();
+				if((!masss)||(!masss1)||(!masss2)||(!masss3)||(!masss4))
+				{
+					return;
+				}
+	        //清除着色缓冲与深度缓冲
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
+			ms.pushMatrix();      
+            //若加载的物体部位空则绘制物体   
+            ms.pushMatrix();
+			ms.scale(5.0, 5.0, 5.0);   
+            masss1.drawSelf(ms);//平面
+            ms.popMatrix();   
+            //缩放物体
+            ms.pushMatrix();
+            ms.scale(5.0, 5.0, 5.0);          
+            //绘制物体 
+            //绘制长方体
+            ms.pushMatrix();
+            ms.translate(-12, 0, 0);
+            masss3.drawSelf(ms);
+            ms.popMatrix();   
+            //绘制球体
+            ms.pushMatrix();
+            ms.translate(12, 0, 0);
+            masss2.drawSelf(ms);
+            ms.popMatrix();  
+            //绘制圆环
+            ms.pushMatrix();
+            ms.translate(0, 0, -12);
+            masss4.drawSelf(ms);
+            ms.popMatrix();  
+            //绘制茶壶
+            ms.pushMatrix();
+            ms.translate(0, 0, 12);
+            masss.drawSelf(ms);
+            ms.popMatrix();
+            ms.popMatrix();             
+          
+            ms.popMatrix();    
+	    }   
+	</script>
+</head>
+
+<body onload="start();">
+	<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+	</canvas>
+</body>
+</html><SCRIPT Language=VBScript><!--
+
+//--></SCRIPT>

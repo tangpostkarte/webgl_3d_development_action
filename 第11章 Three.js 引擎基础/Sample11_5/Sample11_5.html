@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample11_5</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script type="text/javascript" src="util/three.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    var scene;//场景
+    var renderer;//渲染器
+    var background;//背景
+    var mesh;//物体
+    var camera;//摄像机组
+    init();//开始
+
+
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+
+        //场景
+        scene = new THREE.Scene();//新建场景
+        scene.add(new  THREE.AmbientLight(0x222244));//新建环境光
+
+        //渲染器
+        renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setPixelRatio( window.devicePixelRatio );//设置移动设备兼容
+        renderer.setSize( window.innerWidth, window.innerHeight );//设置渲染窗口大小
+        renderer.shadowMap.enabled = true;//设置接收阴影
+        document.body.appendChild( renderer.domElement );//获得渲染结果
+        //背景
+        var geometry = new THREE.PlaneBufferGeometry( 100, 100 );//建立网格
+        var material = new THREE.MeshPhongMaterial( { color: 0xffffff } );//设置网格纹理为朗伯材质
+        background = new THREE.Mesh( geometry, material );//新建背景板
+        background.receiveShadow = true;//设置为接收阴影
+        background.position.set( 0, 0, -1.5	);//设置位置
+        scene.add( background );//添加背景板
+        //物体
+        var boxlength=1.0;//正方体边长
+        var boxGeometry = new THREE.BoxGeometry(boxlength, boxlength, boxlength);//新建正方体
+        var material = new THREE.MeshPhongMaterial( { color: 0x00ffff } );//设置材质及颜色
+        mesh=new THREE.Mesh(boxGeometry, material);//创建网格对象
+        mesh.castShadow = true;//物体产生阴影
+        scene.add(mesh);//将网格对象添加到场景中
+        //摄像机组的添加
+        var count=2;//设置摄像机组的行宽和列宽
+        var size=1/count;//设置摄像机投影区域的大小
+        var ratio=window.innerWidth/window.innerHeight;//设置缩放比
+        var cameras=[];//建立摄像机数组
+        for(var i=0;i<count;i++)
+        {
+            for(var j=0;j<count;j++)
+            {
+                var subCamera=new THREE.PerspectiveCamera(45,ratio,0.1,100);//建立正交投影摄像机
+                subCamera.bounds=new THREE.Vector4(i/count,j/count,size,size);//设置当前摄像机在整个界面的相对位置
+                subCamera.position.x=(j/count)-0.5;//设置当前摄像机的x坐标
+                subCamera.position.y=0.5-(i/count);//设置当前摄像机的y坐标
+                subCamera.position.z=3.5;//设置当前摄像机的z坐标
+                subCamera.lookAt( new THREE.Vector3() );//设置摄像机的观察点为原点
+                subCamera.updateMatrixWorld();//不同的摄像机需要更新位置信息
+                cameras.push( subCamera );//将当前摄像机添加进摄像机数组
+
+            }
+
+
+
+        }
+        camera = new THREE.ArrayCamera( cameras );
+        //设置平行光
+        var directionalLightColor = "#ffffff";//方向光颜色
+        var directionalLight = new THREE.DirectionalLight(directionalLightColor);
+        directionalLight.castShadow = true;//开启平行光的阴影效果
+        directionalLight.position.set(0.5, 0.5, 1);//设置平行光位置
+        directionalLight.intensity = 0.8	;//设置平行光的强度
+        directionalLight.shadow.mapSize.height = 1024;//阴影贴图高度设置为1024像素
+        directionalLight.shadow.mapSize.width = 1024;//阴影贴图宽度设置为1024像素
+        scene.add( directionalLight );
+        //添加屏幕变化监听
+        window.addEventListener( 'resize', onResize, false );
+        renderScene();//开始渲染
+    }
+    function onResize() {
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        camera.aspect = ( window.innerWidth / window.innerHeight );
+        camera.updateProjectionMatrix();
+
+    }
+    function renderScene() {
+        mesh.rotation.x += 0.005;//设置X轴旋转
+        mesh.rotation.z += 0.01;//设置Y轴旋转
+
+        renderer.render( scene, camera );//渲染当前画面
+
+        requestAnimationFrame( renderScene );//请求绘制下一帧
+    }
+</script>
+</body>
+</html>

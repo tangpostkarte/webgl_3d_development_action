@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Ammo.js Sample14_1</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #61443e;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+
+                background-color: #bfd1e5;
+                margin: 0px;
+                overflow: hidden;
+            }
+			#speedometer {
+				color: #ffffff;
+				background-color: #990000;
+				position: absolute;
+				bottom: 0px;
+				padding: 5px;
+			}
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+            }
+
+            a {
+
+                color: #a06851;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="container"><br /><br /><br /><br /><br />Loading...</div>
+		<div id="speedometer">0.0 km/h</div>
+        <div id="info">Ammo.js Sample13_4<br>Press W,A,S,D to move.</div>
+
+		<script src="build/ammo/ammo.js"></script>
+
+        <script src="build/three/three.js"></script>
+        <script src="build/three/OrbitControls.js"></script>
+        <script src="build/three/Detector.js"></script>
+        <script src="build/three/stats.min.js"></script>
+
+        <script>
+
+		Ammo().then(function(Ammo) {
+
+			// 检测WebGL
+			if ( ! Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+			}
+
+			// - 全局变量 -
+			var DISABLE_DEACTIVATION = 4;
+			var TRANSFORM_AUX = new Ammo.btTransform();
+			var ZERO_QUATERNION = new THREE.Quaternion(0, 0, 0, 1);
+
+			// Three渲染所需变量
+			var container, stats, speedometer;
+			var camera, controls, scene, renderer;
+			var terrainMesh, texture;
+			var clock = new THREE.Clock();
+			var materialDynamic, materialStatic, materialInteractive;
+
+			// 物理引擎计算所需变量
+			var collisionConfiguration;
+			var dispatcher;
+			var broadphase;
+			var solver;
+			var physicsWorld;
+
+			var syncList = [];
+			var time = 0;
+			var objectTimePeriod = 3;
+			var timeNextSpawn = time + objectTimePeriod;
+			var maxNumObjects = 30;
+
+			// 操作所需变量
+			var actions = {};
+			var keysActions = {
+				"KeyW":'acceleration',
+				"KeyS":'braking',
+				"KeyA":'left',
+				"KeyD":'right'
+			};
+
+			//初始化渲染变量
+			function initGraphics() {
+
+				container = document.getElementById( 'container' );
+				speedometer = document.getElementById( 'speedometer' );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+				camera.position.x = -4.84;
+				camera.position.y = 4.39;
+				camera.position.z = -35.11;
+				camera.lookAt( new THREE.Vector3( 0.33, -0.40, 0.85 ) );
+				controls = new THREE.OrbitControls( camera );
+
+				renderer = new THREE.WebGLRenderer({antialias:true});
+				renderer.setClearColor( 0xbfd1e5 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				var ambientLight = new THREE.AmbientLight( 0x404040 );
+				scene.add( ambientLight );
+
+				var dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+				dirLight.position.set( 10, 10, -5 );
+				dirLight.intensity=2.0;
+				scene.add( dirLight );
+
+
+				materialDynamic = new THREE.MeshPhongMaterial( { color:0xfca400,map:new THREE.TextureLoader().load("pic/box.bmp") } );
+
+				materialStatic = new THREE.MeshPhongMaterial( { color:0x999999 ,map:new THREE.TextureLoader().load("pic/grass.png")} );
+				materialInteractive=new THREE.MeshPhongMaterial( { color:0x990000 } );
+
+				container.innerHTML = "";
+
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				window.addEventListener( 'keydown', keydown);
+				window.addEventListener( 'keyup', keyup);
+			}
+
+
+			//窗口变化监听
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function initPhysics() {
+
+                //碰撞检测配置信息
+				collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+				//碰撞检测算法分配器
+				dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+				//碰撞粗测检测
+				broadphase = new Ammo.btDbvtBroadphase();
+				//约束解决器
+				solver = new Ammo.btSequentialImpulseConstraintSolver();
+				//创建离散物理世界类
+				physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+				//设置重力约束
+				physicsWorld.setGravity( new Ammo.btVector3( 0, -9.82, 0 ) );
+			}
+
+			//循环渲染
+			function tick() {
+
+				requestAnimationFrame( tick );
+				var dt = clock.getDelta();
+				for (var i = 0; i < syncList.length; i++)
+					syncList[i]();
+				//设置阶跃模拟
+				physicsWorld.stepSimulation( dt, 10 );
+				controls.update( dt );
+				renderer.render( scene, camera );
+				time += dt;
+				stats.update();
+			}
+
+			//按下监听
+			function keyup(e) {
+				if(keysActions[e.code]) {
+					actions[keysActions[e.code]] = false;
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				}
+			}
+			//抬起监听
+			function keydown(e) {
+				if(keysActions[e.code]) {
+					actions[keysActions[e.code]] = true;
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				}
+			}
+
+			//创建盒子
+			function createBox(pos, quat, w, l, h, mass, friction) {
+
+			    //材质
+				var material = mass > 0 ? materialDynamic : materialStatic;
+				//盒子
+				var shape = new THREE.BoxGeometry(w, l, h, 1, 1, 1);
+				//圆柱形状类
+				var geometry = new Ammo.btBoxShape(new Ammo.btVector3(w * 0.5, l * 0.5, h * 0.5));
+
+				//物体是否可以运动
+				if(!mass) mass = 0;
+				//摩擦系数
+				if(!friction) friction = 1;
+
+				//创建网格对象
+				var mesh = new THREE.Mesh(shape, material);
+				mesh.position.copy(pos);
+				mesh.quaternion.copy(quat);
+				scene.add( mesh );
+
+				//创建变换类
+				var transform = new Ammo.btTransform();
+				//变化类初始化
+				transform.setIdentity();
+				//设置原点
+				transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+				//设置旋转
+				transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+				//运动状态
+				var motionState = new Ammo.btDefaultMotionState(transform);
+
+				//局部惯性
+				var localInertia = new Ammo.btVector3(0, 0, 0);
+				//计算惯性
+				geometry.calculateLocalInertia(mass, localInertia);
+
+				//创建刚体信息对象
+				var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, geometry, localInertia);
+				//创建刚体
+				var body = new Ammo.btRigidBody(rbInfo);
+
+				//设置摩擦系数
+				body.setFriction(friction);
+                //将网格添加进物理世界
+				physicsWorld.addRigidBody( body );
+
+				if (mass > 0) {
+				    //设置激活状态
+					body.setActivationState(DISABLE_DEACTIVATION);
+					//同步物理计算与图形
+					function sync() {
+					    //获取刚体的运动状态
+						var ms = body.getMotionState();
+						//如果获取信息成功
+						if (ms) {
+						    //获取刚体在世界坐标系下的坐标系对象
+							ms.getWorldTransform(TRANSFORM_AUX);
+							//获取变换对象的位置
+							var p = TRANSFORM_AUX.getOrigin();
+							//获取变换对象的旋转信息
+							var q = TRANSFORM_AUX.getRotation();
+							//设置网格对象的位置
+							mesh.position.set(p.x(), p.y(), p.z());
+							//设置网格对象的旋转信息
+							mesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
+						}
+					}
+                    //将更新放进更新函数数组
+					syncList.push(sync);
+				}
+			}
+
+			//创建轮子网格对象
+			function createWheelMesh(radius, width) {
+				var t = new THREE.CylinderGeometry(radius, radius, width, 24, 1);
+				t.rotateZ(Math.PI / 2);
+				var mesh = new THREE.Mesh(t, materialInteractive);
+				mesh.add(new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, radius * 1.75, radius*.25, 1, 1, 1), materialInteractive));
+				scene.add(mesh);
+				return mesh;
+			}
+
+			//创建底盘网格对象
+			function createChassisMesh(w, l, h) {
+				var shape = new THREE.BoxGeometry(w, l, h, 1, 1, 1);
+				var mesh = new THREE.Mesh(shape, materialInteractive);
+				scene.add(mesh);
+				return mesh;
+			}
+
+			//创建车辆
+			function createVehicle(pos, quat) {
+
+				//车辆常量
+				var chassisWidth = 1.8;
+				//底盘高度
+				var chassisHeight = .6;
+				//底盘长度
+				var chassisLength = 4;
+                //车身质量
+				var massVehicle = 800;
+
+
+                //后轮圆柱体的半径（Three.js渲染所需）
+                var wheelRadiusBack = .4;
+                //后轮圆柱体的长度（Three.js渲染所需）
+                var wheelWidthBack = .3;
+
+				//后轮轴距离中轴线的位置
+				var wheelAxisPositionBack = -1;
+				//后车轮到车身原点的纵向距离
+				var wheelHalfTrackBack = 1;
+				//车身垂直方向偏移量
+				var wheelAxisHeightBack = .3;
+
+
+				var wheelAxisFrontPosition = 1.7;
+				var wheelHalfTrackFront = 1;
+				var wheelAxisHeightFront = .3;
+				var wheelRadiusFront = .35;
+				var wheelWidthFront = .2;
+
+				//摩擦系数
+				var friction = 1000;
+				//坚硬系数
+				var suspensionStiffness = 20.0;
+				//阻尼系数
+				var suspensionDamping = 2.3;
+				//压缩系数
+				var suspensionCompression = 4.4;
+				//悬浮高度
+				var suspensionRestLength = 0.6;
+				//压力系数
+				var rollInfluence = 0.2;
+
+                //转向增量
+				var steeringIncrement = .04;
+				//转向减速
+				var steeringClamp = .5;
+                //最大发动机力
+				var maxEngineForce = 2000;
+				//最大刹车力
+				var maxBreakingForce = 100;
+
+				// 底盘
+                //创建车身形状
+				var geometry = new Ammo.btBoxShape(new Ammo.btVector3(chassisWidth * .5, chassisHeight * .5, chassisLength * .5));
+				//创建变换类
+				var transform = new Ammo.btTransform();
+				//初始化变换类
+				transform.setIdentity();
+				//设置变换对象的位置
+				transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+				//设置变换类的旋转位置
+				transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+				//获取运动状态
+				var motionState = new Ammo.btDefaultMotionState(transform);
+				//局部惯性
+				var localInertia = new Ammo.btVector3(0, 0, 0);
+				//计算局部惯性
+				geometry.calculateLocalInertia(massVehicle, localInertia);
+				//创建小车底盘刚体
+				var body = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(massVehicle, motionState, geometry, localInertia));
+				//设置激活状态
+				body.setActivationState(DISABLE_DEACTIVATION);
+				//将刚体添加进物理世界
+				physicsWorld.addRigidBody(body);
+				//创建底盘网格对象
+				var chassisMesh = createChassisMesh(chassisWidth, chassisHeight, chassisLength);
+
+				// Raycast Vehicle
+				var engineForce = 0;
+				var vehicleSteering = 0;
+				var breakingForce = 0;
+				//创建交通工具协调器
+				var tuning = new Ammo.btVehicleTuning();
+				//创建默认的交通工具回调类对象
+				var rayCaster = new Ammo.btDefaultVehicleRaycaster(physicsWorld);
+				//创建交通类对象
+				var vehicle = new Ammo.btRaycastVehicle(tuning, body, rayCaster);
+				//设置小车坐标系统
+				vehicle.setCoordinateSystem(0, 1, 2);
+				//将交通工具添加进物理世界
+				physicsWorld.addAction(vehicle);
+
+				//车轮
+				var FRONT_LEFT = 0;     //左前轮索引
+				var FRONT_RIGHT = 1;    //右前轮索引
+				var BACK_LEFT = 2;      //左后轮索引
+				var BACK_RIGHT = 3;     //右后轮索引
+				var wheelMeshes = [];   //车轮网格对象数组
+                //车轮方向
+				var wheelDirectionCS0 = new Ammo.btVector3(0, -1, 0);
+				//车轮轴向量
+				var wheelAxleCS = new Ammo.btVector3(-1, 0, 0);
+
+				//添加车轮
+				function addWheel(isFront, pos, radius, width, index) {
+				    //添加车辆添加车轮
+					var wheelInfo = vehicle.addWheel(
+							pos,                    //车的连接点
+							wheelDirectionCS0,      //车轮方向
+							wheelAxleCS,            //车轮的轴向量
+							suspensionRestLength,   //车轮悬挂系统在松弛下的长度
+							radius,                 //车轮半径
+							tuning,                 //表示协调器
+							isFront);               //标识是否添加驱动力
+                    //设置车轮的坚硬系数
+					wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
+					//设置车轮的阻尼系数
+					wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
+					//设置压缩系数
+					wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
+					//设置车轮的摩擦系数
+					wheelInfo.set_m_frictionSlip(friction);
+					//设置车轮压力系数
+					wheelInfo.set_m_rollInfluence(rollInfluence);
+					//创建轮子网格对象并添加进数组
+					wheelMeshes[index] = createWheelMesh(radius, width);
+				}
+
+				addWheel(true, new Ammo.btVector3(wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition), wheelRadiusFront, wheelWidthFront, FRONT_LEFT);
+				addWheel(true, new Ammo.btVector3(-wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition), wheelRadiusFront, wheelWidthFront, FRONT_RIGHT);
+				addWheel(false, new Ammo.btVector3(-wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack), wheelRadiusBack, wheelWidthBack, BACK_LEFT);
+				addWheel(false, new Ammo.btVector3(wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack), wheelRadiusBack, wheelWidthBack, BACK_RIGHT);
+
+				//按键动作使物理计算与图形渲染同步
+				function sync() {
+
+				    //获取当前速度
+					var speed = vehicle.getCurrentSpeedKmHour();
+                    //显示当前速度
+					speedometer.innerHTML = (speed < 0 ? '(R) ' : '') + Math.abs(speed).toFixed(1) + ' km/h';
+
+                    //制动力
+                    breakingForce = 0;
+                    //发动机力
+                    engineForce = 0;
+
+                    //如果当前处于加速状态（按下W键）
+					if (actions.acceleration) {
+						if (speed < -1)     //当前速度小于-1
+						    //设置制动力
+							breakingForce = maxBreakingForce;
+						else
+						    //设置发动力
+						    engineForce = maxEngineForce;
+					}
+
+					//如果当前处于制动状态（按下S键）
+					if (actions.braking) {
+						if (speed > 1)      //当前速度大于1
+						    //设置制动力
+							breakingForce = maxBreakingForce;
+						else
+						    //设置发动力
+						    engineForce = -maxEngineForce / 2;
+					}
+
+					//如果当前处于左转状态（按下A键）
+					if (actions.left) {
+					    //转向速度小于转速限制
+						if (vehicleSteering < steeringClamp)
+						    //转向速度增加
+							vehicleSteering += steeringIncrement;
+					}
+					else {
+					    //如果当前处于右转状态（按下D键）
+						if (actions.right) {
+							if (vehicleSteering > -steeringClamp)
+								vehicleSteering -= steeringIncrement;
+						}
+						else {
+						    //左转或者右转之后的状态
+							if (vehicleSteering < -steeringIncrement)
+								vehicleSteering += steeringIncrement;
+							else {
+								if (vehicleSteering > steeringIncrement)
+									vehicleSteering -= steeringIncrement;
+								else {
+									vehicleSteering = 0;
+								}
+							}
+						}
+					}
+
+					//设置后轮的发动力
+					vehicle.applyEngineForce(engineForce, BACK_LEFT);
+					vehicle.applyEngineForce(engineForce, BACK_RIGHT);
+
+					//设置前后的制动力
+					vehicle.setBrake(breakingForce / 2, FRONT_LEFT);
+					vehicle.setBrake(breakingForce / 2, FRONT_RIGHT);
+					vehicle.setBrake(breakingForce, BACK_LEFT);
+					vehicle.setBrake(breakingForce, BACK_RIGHT);
+
+					//设置转向
+					vehicle.setSteeringValue(vehicleSteering, FRONT_LEFT);
+					vehicle.setSteeringValue(vehicleSteering, FRONT_RIGHT);
+
+					var tm, p, q, i;
+                    //获取车轮数量
+					var n = vehicle.getNumWheels();
+					//遍历车轮网格对象数组，同步物理计算和车轮的位置、旋转信息
+					for (i = 0; i < n; i++) {
+						vehicle.updateWheelTransform(i, true);  //更新车轮变换
+						tm = vehicle.getWheelTransformWS(i);    //获取车轮变换对象
+						p = tm.getOrigin();     //获取变换位置
+						q = tm.getRotation();   //获取四元数旋转
+						wheelMeshes[i].position.set(p.x(), p.y(), p.z());
+						wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
+					}
+
+					//获取车辆变换类对象
+					tm = vehicle.getChassisWorldTransform();
+					p = tm.getOrigin();//获取变换位置
+					q = tm.getRotation();//获取旋转
+					chassisMesh.position.set(p.x(), p.y(), p.z());
+					chassisMesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
+				}
+
+				syncList.push(sync);
+			}
+
+			//创建物体的方法
+			function createObjects() {
+
+			    //创建地板
+				createBox(new THREE.Vector3(0, -0.5, 0), ZERO_QUATERNION, 75, 1, 75, 0, 2);
+
+
+				//创建四元数旋转
+				var quaternion = new THREE.Quaternion(0, 0, 0, 1);
+				//设置旋转轴
+				quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 18);
+                //创建坡起网格对象
+				createBox(new THREE.Vector3(0, -1.5, 0), quaternion, 8, 4, 10, 0);
+
+				//创建75个排列的箱子
+				var size = .75;
+				var nw = 8;
+				var nh = 6;
+				for (var j = 0; j < nw; j++)
+					for (var i = 0; i < nh; i++)
+						createBox(new THREE.Vector3(size * j - (size * (nw - 1)) / 2, size * i, 10), ZERO_QUATERNION, size, size, size, 10);
+                //创建车量
+				createVehicle(new THREE.Vector3(0, 4, -20), ZERO_QUATERNION);
+			}
+
+			// 初始化渲染
+			initGraphics();
+			//初始化物理世界
+			initPhysics();
+			//创建物体
+			createObjects();
+			//渲染
+			tick();
+
+		});
+
+        </script>
+    </body>
+</html>

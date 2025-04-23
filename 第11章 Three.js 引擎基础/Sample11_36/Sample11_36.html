@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<head>
+    <title>Sample11_36</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <script type="text/javascript" src="util/DecalGeometry.js"></script>
+    <script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //本案例占cpu运算性能
+    var moveFlag=false;//移动标志位
+    var scene;//场景变量
+    var renderer;//新建渲染器变量
+    var camera;//摄像机变量
+    var mesh=[];//球体
+    var tempObj;
+    var meshPoint;//交叉检测后的模型位置
+    var declasTextureLoader;
+    var declasTexture;
+    var animation;//新建动画对象
+    var ray;//新建射线对象
+    var line;//辅助线
+    var decals=[];
+    var mouseHelper;
+    var decalsDrection=new THREE.Euler();//新建一个欧拉角变量存储xyz的旋转角度
+    var declasPoint=new THREE.Vector3();//存储贴图位置的x，y，z坐标
+    var mousePoint=new THREE.Vector2();
+    var declasSize=new THREE.Vector3(10,10,10);
+    var declasMaterial;//新建贴花纹理
+    var declasParams={
+        declasInterSectionFlag:false,                       //是否相交
+        declasInterSectionPoint: new THREE.Vector3(),   //相交位置的XYZ
+        declasInterSectionNoraml:new THREE.Vector3()    //相交位置的发现
+    };
+
+    var guiParams={
+        guiMinScale:2,
+        guiMaxScale:7,
+        guiDeclasClear:function () {
+            declasClear();//清除模型贴花
+        }
+    }
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();//初始化场景
+
+        initTexture();//初始化贴图纹理
+		addObj();//添加物体
+        addGui();
+        setTimeout(function () {
+            addLight();
+            //将渲染结果添加到网页的元素中
+            document.getElementById("WebGL-output").appendChild(renderer.domElement);
+            window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+            renderScene();//进行渲染
+            addControls();//添加鼠标控制
+        },50);
+
+
+
+    }
+    
+    function addGui() {
+        var gui=new dat.GUI({width:300});//新建控制面板变量
+        gui.open();//打开控制面板
+
+
+        gui.add(guiParams,'guiMinScale',2,7).name("贴花最小值");
+        gui.add(guiParams,'guiMaxScale',7,14).name("贴花最大值");
+        gui.add( guiParams, 'guiDeclasClear' ).name("清除贴花");
+
+    }
+
+    function initTexture() {
+        declasTextureLoader=new THREE.TextureLoader();//新建纹理加载器
+        declasTexture=declasTextureLoader.load('img/flower.png');
+        //console.log(declasTexture);
+        declasMaterial=new THREE.MeshPhongMaterial({
+            specular: 0x444444,     //高光色
+            normalScale: new THREE.Vector2( 1, 1 ),//法向量
+            shininess: 30,//高光强度
+            transparent: true,//开启透明
+            depthTest: true,
+            depthWrite: false,
+            polygonOffset: true,//绘制偏移量
+            polygonOffsetFactor: - 4,
+            map:declasTexture});
+
+    }
+
+    function declasClear() {
+        decals.forEach( function( d ) {//遍历从场景中移除贴花
+            scene.remove( d );
+        } );
+        decals = [];
+    }
+
+    function addLight() {
+        var hemisphereLight = new THREE.HemisphereLight(0xffffff,0x000000,0.7);//创建半球光源 天空光 地面光 强度
+        hemisphereLight.position.set(0,50,50);					//设置光源位置
+        hemisphereLight.rotation.x=-Math.PI;                      //使得光源对着物体
+        scene.add(hemisphereLight);
+        var ambientLight=new THREE.AmbientLight(0x111111,1.4);//新建环境光
+        scene.add( ambientLight );
+
+    }
+    //添加鼠标控制
+    function addControls() {
+
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.addEventListener( 'change', renderScene ); //添加监听
+        controls.minDistance = 30;//设置拉伸的最小距离
+        controls.maxDistance = 1000;//设置拉伸的最大距离
+        controls.addEventListener('change',function () {
+            moveFlag=true;//如果使用鼠标移动物体，标志位置反
+        });
+
+        window.addEventListener('mousedown',function () {
+            moveFlag=false;//如果鼠标点击，标志位置反
+        },false);
+
+        window.addEventListener('mouseup',function () {
+            checkIntersection();//交叉点检测
+            if(!moveFlag&&declasParams.declasInterSectionFlag)
+            {
+                //进行贴花
+                declasOnObj();
+            }
+        });
+
+        setTimeout(function () {
+
+            window.addEventListener('mousemove',mouseMove);
+            window.addEventListener('touchmove',mouseMove);//移动设备的监听
+        },70);
+
+
+    }
+
+    function mouseMove(event) {
+
+        if(!mesh[0]&&declasParams.declasInterSectionFlag)//如果模型不存在
+        {
+            return;
+        }else
+        {
+            var x, y;
+            if ( event.changedTouches ) {//获得移动设备的触摸改变的值
+
+                x = event.changedTouches[ 0 ].pageX;//获得x坐标
+                y = event.changedTouches[ 0 ].pageY;//获得y坐标
+
+            } else {
+                x = event.clientX;//获得鼠标的x坐标
+                y = event.clientY;//获得y坐标
+            }
+            //console.log("x:"+x+"|y:"+y);
+
+            mousePoint.x = ( x / window.innerWidth ) * 2 - 1;//转变为笛卡尔坐标 即转换为世界坐标系
+            mousePoint.y = - ( y / window.innerHeight ) * 2 + 1;
+
+            checkIntersection();//检测时候鼠标和模型有交叉
+        }
+
+
+    }
+
+    function checkIntersection() {
+        if(!mesh[0])
+        {
+            return;
+        }else
+        {
+            ray=new THREE.Raycaster();//创建射线对象
+
+            ray.setFromCamera(mousePoint,camera);//将射线起始点（鼠标点击点）与摄像机传给射线  并发出射线
+            var interSection=ray.intersectObjects(mesh,true);//设置监听模型  获取射线与模型相交的信息列表
+            //console.log(interSection[0].point);
+            //interSection[0].point   3d场景中鼠标点击的茶壶相交的点
+            if(interSection.length>0)
+            {
+                meshPoint=interSection[0].point;//获得点击点的坐标
+                //console.log(meshPoint.x+"||||"+meshPoint.y+"||||"+meshPoint.z);
+                var p = interSection[ 0 ].point;
+                mouseHelper.position.copy( p );
+                declasParams.declasInterSectionPoint.copy( p );//将相交点传给贴花坐标点
+
+                var n = interSection[ 0 ].face.normal.clone();//获取相交点所处面的法向量
+
+                n.transformDirection( mesh[0].matrixWorld );//将物体法向量由物体坐标系转换至世界坐标系
+                n.multiplyScalar( 10 );//并将法向量乘以标量 即将世界坐标系下的物体法向量转换为标准格式
+                n.add( interSection[ 0 ].point );//将物体相交点 添加进法向量数据中
+                declasParams.declasInterSectionNoraml.copy(interSection[ 0 ].face.normal.clone());//将法向量数据传给贴花数组
+                mouseHelper.lookAt(n);
+                declasParams.declasInterSectionFlag = true;//设置贴花标志为true
+
+            }else
+            {
+                declasParams.declasInterSectionFlag=false;
+            }
+        }
+
+    }
+
+    function declasOnObj() {
+
+        declasPoint.copy(declasParams.declasInterSectionPoint);//获取贴花世界坐标系下的坐标点
+        var scale = guiParams.guiMinScale + Math.random() * ( guiParams.guiMaxScale - guiParams.guiMinScale );//获得一个随机的大小
+        declasSize.set(scale,scale,scale);//设置贴花缩放比
+        decalsDrection.copy( mouseHelper.rotation );//获取贴花的欧拉角
+
+        var material = declasMaterial.clone();
+        console.log(declasSize+mesh[0]+material);        //网格  贴花位置    贴花欧拉角      贴花大小缩放比例  材质
+        var m = new THREE.Mesh( new THREE.DecalGeometry( mesh[0], declasPoint,decalsDrection, declasSize ), material );
+        decals.push( m );//将当前贴花存入列表  当清除场景中的贴花时，遍历列表获取贴花对象，并从场景中清除
+        scene.add( m );//将当前贴花添加进场景中
+    }
+    
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x666666));//设置背景颜色
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.x = 0;//设置摄像机位置
+        camera.position.y = 100;
+        camera.position.z = 100;
+        camera.lookAt(scene.position);//设置摄像机焦点
+
+        mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 100 ), new THREE.MeshNormalMaterial() );
+        mouseHelper.visible = false;
+        scene.add( mouseHelper );//获得模型某个位置上的欧拉角的辅助工具
+    }
+
+    function addObj(){//添加材质和可视化界面的方法
+        var loader = new THREE.JSONLoader();
+
+        loader.load( 'obj/1.js', function( geometry ) {//导入茶壶的obj
+
+            var material = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture('obj/ghxp.png')});
+
+            mesh[0] = new THREE.Mesh( geometry, material );
+            scene.add( mesh[0] );
+            mesh[0].rotation.z=Math.PI;//调整视角
+            mesh[0].rotation.x=-Math.PI/2;
+        } );
+    }
+
+
+    function renderScene() {
+
+        renderer.render( scene, camera );
+
+        if(animation)//如果有动画
+        {
+            animation.setTime(Date.now() / 1000 );
+        }
+        requestAnimationFrame(renderScene);
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <script src="bulid/babylon.custom.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var createScene = function () {
+        
+            //创建场景
+            var scene = new BABYLON.Scene(engine);
+
+            //创建弧形旋转摄像机
+            var camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 8, 20, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.setTarget(BABYLON.Vector3.Zero());
+        
+            //光源
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.7;
+
+            //雾
+            scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+            scene.fogColor = new BABYLON.Color3(1,1, 1);
+            scene.fogDensity = 0.008;
+
+            //创建地板
+            var ground =BABYLON.MeshBuilder.CreateGround("gd", {width: 60,height:40 ,subdivsions: 4}, scene);
+
+            //创建立方体
+            for(var i=0;i<100;i++) {
+               var size=5*Math.random();
+               var meshMatrial=new BABYLON.StandardMaterial("meshMatrial",scene);
+               meshMatrial.diffuseColor=new BABYLON.Color3(Math.random(),Math.random(),Math.random())
+               var meshBox= BABYLON.MeshBuilder.CreateBox("box"+i,{size:size},scene);
+               meshBox.material=meshMatrial;
+               meshBox.position.x=60*Math.random()-30;
+               meshBox.position.z=40*Math.random()-20;
+               meshBox.position.y=5*Math.random();
+            }
+            //删除索引
+            var deleteNum=0;
+            window.addEventListener("click",()=>{
+                scene.removeMesh(scene.getMeshByName("box"+deleteNum),false)
+                if(deleteNum>99){alert("立方体已经清空")}
+                deleteNum++;
+                console.log(camera.position)
+            });
+        
+            return scene;
+        
+        };
+        
+        var engine = new BABYLON.Engine(canvas);
+        var scene = createScene();
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

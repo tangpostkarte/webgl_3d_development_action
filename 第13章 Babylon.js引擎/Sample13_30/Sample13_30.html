@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Sample13_30</title>
+
+        <!-- Babylon.js -->
+        
+        <script src="build/cannon.js"></script>
+        <script src="build/babylon.custom.js"></script>
+        
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        function init(){
+
+            var canvas,engine,scene,camera,light;
+            function createScene() {
+                canvas = document.getElementById("renderCanvas");
+                engine = new BABYLON.Engine(canvas, true);
+                scene = new BABYLON.Scene(engine);
+                
+                camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0, 0, -40), scene);
+                camera.attachControl(canvas, true);
+                camera.checkCollisions = true;
+                camera.applyGravity = true;
+                camera.setTarget(new BABYLON.Vector3(0, 0, 0));
+            
+                light = new BABYLON.DirectionalLight("dir02", new BABYLON.Vector3(0.2, -1, 0), scene);
+                light.position = new BABYLON.Vector3(0, 80, 0);
+            
+                
+                //创建阴影发生器
+                var shadowGenerator = new BABYLON.ShadowGenerator(2048, light);
+                shadowGenerator.useBlurExponentialShadowMap = true;
+                shadowGenerator.useKernelBlur = true;
+                shadowGenerator.blurKernel = 32;
+                
+                scene.enablePhysics(new BABYLON.Vector3(0,-9.8,0), new BABYLON.CannonJSPlugin());
+                let tex1 = new BABYLON.Texture("textures/amiga.jpg", scene);
+                var tex2 = new BABYLON.Texture('textures/football.jpg',scene);
+                let texs = [tex1,tex2];
+                let i=0;
+                //创建球体材质
+                var sphereMaterial = new BABYLON.StandardMaterial("amiga", scene);
+                
+                sphereMaterial.diffuseTexture = tex1;
+                sphereMaterial.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                sphereMaterial.diffuseTexture.uScale = 5;
+                sphereMaterial.diffuseTexture.vScale = 5;
+                //创建球体 并添加刚体
+                var sphere = BABYLON.Mesh.CreateSphere("Sphere0", 16, 3, scene);
+                sphere.material = sphereMaterial;
+                sphere.position = new BABYLON.Vector3( 0, 20, 0);
+                shadowGenerator.addShadowCaster(sphere);
+                sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1,restitution:0.9 }, scene);
+                
+                //地板材质
+                var groundMaterial = new BABYLON.StandardMaterial('groundMaterial',scene);
+                groundMaterial.diffuseColor = new BABYLON.Vector3(0.5,0.5,0.5);
+                //添加地板
+                var ground = BABYLON.Mesh.CreateBox("Ground", 1, scene);
+                ground.scaling = new BABYLON.Vector3(100, 1, 100);
+                ground.position.y = -5.0;
+                //ground.checkCollisions = true;
+                ground.material = groundMaterial;
+                ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground,BABYLON.PhysicsImpostor.BoxImpostor,{mass:0,restitution:0.9},scene);
+                
+                //添加碰撞回调函数
+                sphere.physicsImpostor.registerOnPhysicsCollide(
+                    ground.physicsImpostor,
+                    (main,collide)=>{
+                        i++;
+                        main.object.material.diffuseTexture = texs[i%2];
+                });
+            }
+            
+            createScene();
+
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+
+            // Resize
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

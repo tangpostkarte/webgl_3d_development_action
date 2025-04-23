@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_38</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    var scene;//场景变量
+    var renderer;//新建渲染器变量
+    var camera;//摄像机变量
+    var mesh;//物体
+    var mixer;
+    var clock;
+    var GuiParams={
+        offsetX: 0,
+        offsetY: 0,
+        repeatX: 0.25,
+        repeatY: 0.25,
+        rotation: Math.PI / 4, // positive is counter-clockwise
+        centerX: 0.5,
+        centerY: 0.5,
+        //color:0xffffff
+    };
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();//初始化场景
+        addControls();//添加鼠标控制
+        addLight();
+        addSupport();
+        addMesh();//添加物体
+        addGUI();
+        updateUvTransform();
+        //将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+        renderScene();//进行渲染
+
+    }
+    //添加控制面板
+    function addGUI() {
+        var gui = new dat.GUI( { width: 300 } );
+        gui.open();
+        var myTitle=gui.addFolder('设置');
+        myTitle.add( GuiParams, 'offsetX', 0.0, 1.0 ).name( 'x偏移量' ).onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'offsetY', 0.0, 1.0 ).name( 'y偏移量' ).onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'repeatX', 0.25, 2.0 ).name( 'x轴重复' ).onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'repeatY', 0.25, 2.0 ).name( 'y轴重复' ).onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'rotation', - 2.0, 2.0 ).name( '纹理旋转' ).onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'centerX', 0.0, 1.0 ).name( 'x轴中心点').onChange( updateUvTransform );
+        myTitle.add( GuiParams, 'centerY', 0.0, 1.0 ).name( 'y轴中心点' ).onChange( updateUvTransform );
+        renderScene();//进行渲染
+    }
+    function updateUvTransform() {
+        var texture = mesh.material.map;
+
+        //设置当前纹理的属性  ===和!== 只有在类型相同的情况下才会比较其值
+        if ( texture.matrixAutoUpdate === true ) {
+            texture.offset.set( GuiParams.offsetX, GuiParams.offsetY );
+            texture.repeat.set( GuiParams.repeatX, GuiParams.repeatY );
+            texture.center.set( GuiParams.centerX, GuiParams.centerY );
+            texture.rotation = GuiParams.rotation;
+        } else {
+            //设置当前纹理uv属性
+            texture.matrix.setUvTransform( GuiParams.offsetX, GuiParams.offsetY, GuiParams.repeatX,
+                GuiParams.repeatY, GuiParams.rotation, GuiParams.centerX, GuiParams.centerY );
+        }
+    }
+
+    function addSupport() {
+    }
+
+    //添加光照效果
+    function addLight() {
+        var spotLight = new THREE.SpotLight("#ffffff"); 	//创建聚光灯光源
+        spotLight.position.set(camera.position);
+        scene.add(spotLight);
+        var ambientLight=new THREE.AmbientLight(0x404040);//创建环境光
+        scene.add(ambientLight);
+    }
+
+    //添加鼠标控制
+    function addControls() {
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.addEventListener( 'change', renderScene ); //添加监听
+        controls.minDistance = 3;//设置拉伸的最小距离
+        controls.maxDistance = 1000;//设置拉伸的最大距离
+        controls.enablePan = true;//是否可以平移
+        controls.zoomSpeed=3.0;//设置缩放比例
+    }
+
+    //设置窗口大小变换
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 10, 1000);
+        camera.position.x = -5;//设置摄像机位置
+        camera.position.y = 10;
+        camera.position.z = 30;
+        camera.lookAt(scene.position);//设置摄像机焦点
+    }
+
+    function addMesh(){//添加材质和可视化界面的方法
+        var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+
+        var loader = new THREE.TextureLoader();
+        var texture = loader.load( 'img/UV_Grid_Sm.jpg', renderScene );//加载图片并回调renderScene方法
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;//设置贴图方式
+
+        texture.matrixAutoUpdate = false; //关闭矩阵自动更新
+
+        var material = new THREE.MeshBasicMaterial( { map: texture } );
+
+        mesh = new THREE.Mesh( geometry, material );
+        scene.add( mesh );
+    }
+
+    function renderScene() {
+
+        renderer.render( scene, camera );
+        requestAnimationFrame(renderScene);
+    }
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

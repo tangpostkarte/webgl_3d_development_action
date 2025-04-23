@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>SSAO渲染的实现</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="shader/CopyShader.js"></script>
+    <script type="text/javascript" src="shader/SSAOShader.js"></script>
+    <script type="text/javascript" src="util/EffectComposer.js"></script>
+    <script type="text/javascript" src="util/EffectComposer.js"></script>
+    <script type="text/javascript" src="util/RenderPass.js"></script>
+    <script type="text/javascript" src="util/ShaderPass.js"></script>
+    <script type="text/javascript" src="util/MaskPass.js"></script>
+    <script type="text/javascript" src="util/SSAOPass.js"></script>
+    <script type="text/javascript" src="util/OBJLoader.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+	<script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <script type="text/javascript" src="util/stats.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<div id="container"></div>
+<script type="text/javascript">
+    var boxGeometry;
+    var boxMaterial;
+    var scene;//场景变量
+    var renderer;//新建渲染器变量
+    var camera;//摄像机变量
+    var box;//新建物体变量
+    var plane;
+    var stats,container;//fps监听
+    var dirLight;
+    var ssaoPass;//新建SSAO抗锯齿变量
+    var effectComposer;//新建效果组合器
+    var params={ enabled:true, onlyAO: false, radius: 32, aoClamp: 0.25, lumInfluence: 0.7 };
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();//初始化场景
+		addMaterial();//添加物体
+        addControls();
+        initPostprocessing();//初始化效果组合器
+        onWindowResize();//添加窗口变化监听
+
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+        addGui();//添加控制面板
+    }
+    //添加鼠标控制
+    function addControls() {
+        stats=new Stats();
+        container.appendChild( stats.dom );
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.enablePan = false;//是否可以平移
+        controls.enableZoom =false;//设置缩放比例
+        //controls.maxPolarAngle = Math.PI*1/9;//控制角度
+    }
+    function addGui() {
+        var gui=new dat.GUI({width:300});//新建控制面板变量
+        gui.open();//打开控制面板
+
+        var myTitle=gui.addFolder('设置');
+
+        myTitle.add(params,'enabled').name("SSAO开关");
+        myTitle.add(params,'onlyAO',false).name("AO开关").onChange(function (e) {
+            ssaoPass.onlyAO=e;//设置AO开关
+        });
+
+
+    }
+    
+    function initPostprocessing() {
+
+        var renderPass = new THREE.RenderPass( scene, camera );//新建渲染场景通道
+        ssaoPass = new THREE.SSAOPass( scene, camera );//新建ssao通道
+        ssaoPass.renderToScreen = true;//将渲染结果显示到屏幕上
+        effectComposer = new THREE.EffectComposer( renderer );//新建效果组合器
+        effectComposer.addPass( renderPass );//添加渲染场景通道
+        effectComposer.addPass( ssaoPass );//添加SSAO通道
+
+    }
+
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+
+        ssaoPass.setSize( width, height);//设置SSAO的窗口
+
+        var pixelRatio = renderer.getPixelRatio();//移动设备兼容
+        var newWidth  = Math.floor( width / pixelRatio ) || 1;
+        var newHeight = Math.floor( height / pixelRatio ) || 1;
+        effectComposer.setSize( newWidth, newHeight );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        container = document.getElementById( "container" );
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.x = -24.24;//设置摄像机位置
+        camera.position.y = 48.6*6;
+        camera.position.z = -22.2*5;
+        camera.lookAt(scene.position);//设置摄像机焦点
+    }
+
+    function addMaterial(){//添加材质和可视化界面的方法
+        var planeGeometry = new THREE.PlaneGeometry(500,500);
+        var planeMaterial = new THREE.MeshLambertMaterial({color:0xaaaaaa});
+        plane= new THREE.Mesh(planeGeometry,planeMaterial);
+
+        plane.rotation.x=-Math.PI/2;
+        plane.position.x = 0;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        plane.receiveShadow=true;
+        scene.add(plane);
+        var objloader=new THREE.OBJLoader();
+        objloader.load('obj/obj.obj',function (object) {
+            object.scale.set(0.01,0.01,0.01);
+            boxGeometry=object.clone();
+            console.log(object);
+            scene.add(object);//将球体添加到场景中
+            renderScene();//进行渲染
+        });
+
+        var spotLight = new THREE.SpotLight("#ffffff"); 	//创建聚光灯光源
+        spotLight.position.set(0,400,400);
+        scene.add(spotLight);
+
+        var ambientLight=new THREE.AmbientLight("#111111");
+        scene.add(ambientLight);
+    }
+
+
+    function renderScene() {
+
+        if ( params.enabled ) {
+            effectComposer.render();//效果组合器进行渲染
+        } else {
+            renderer.render( scene, camera );
+        }
+        stats.update();
+
+        requestAnimationFrame(renderScene);
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

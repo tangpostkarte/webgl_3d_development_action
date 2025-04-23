@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Sample11_34</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/OBJLoader.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer;
+        var webGLRenderer = new THREE.WebGLRenderer();//新建渲染器
+        webGLRenderer.setClearColor(0x000000, 1.0);//设置背景颜色
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+		webGLRenderer.shadowMapEnabled = true;
+        renderer = webGLRenderer;
+		
+        
+		function createGround()//创建带光照贴图的地面
+		{
+            var groundGeom = new THREE.PlaneGeometry(40, 40, 1, 1);//创建平面
+            var lm = THREE.ImageUtils.loadTexture('textures/pm.png');//读取光照贴图
+            var wood = THREE.ImageUtils.loadTexture('textures/floor-wood.jpg');//读取地板的纹理贴图
+            var groundMaterial = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xffffff,//设置地板颜色
+                    lightMap: lm,//设置光照贴图
+                    map: wood//设置贴图
+                });
+            groundGeom.faceVertexUvs[1] = groundGeom.faceVertexUvs[0];//设置光照贴图的UV数据
+            var groundMesh = new THREE.Mesh(groundGeom, groundMaterial);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.position.y = 0;
+            scene.add(groundMesh);
+		}
+		createGround();
+		var model;//用来控制模型的变量
+		var chahu2;
+		var loader = new THREE.OBJLoader();//新建obj的加载器
+        loader.load('model/chahu.obj', function (loadedMesh) {//加载茶壶模型
+           var meshMaterial = new THREE.MeshPhongMaterial();//新建茶壶的材质
+			meshMaterial.map = THREE.ImageUtils.loadTexture('textures/ghxp.png');//读取茶壶的纹理
+            loadedMesh.children.forEach(function (child) {//遍历模型的所有子对象
+                child.material = meshMaterial;//将材质应用到模型中
+            });
+            model = loadedMesh;//将读取的模型赋值给model变量
+            loadedMesh.scale.set(0.4, 0.4,0.4);//设置放大系数
+			loadedMesh.rotation.y=0.2;//设置旋转
+			loadedMesh.position.set(-8,0,0);//设置茶壶位置
+            scene.add(loadedMesh);//将模型添加到场景中
+			chahu2=loadedMesh.clone();//克隆一个茶壶对象
+			chahu2.position.set(2.8,0,-8);//设置茶壶位置
+			scene.add(chahu2);//将模型添加到场景中
+        });
+        camera.position.x = -20;//设置摄像机的x坐标
+        camera.position.y = 20;//设置摄像机的y坐标
+        camera.position.z = 30;//设置摄像机的z坐标
+        camera.lookAt(new THREE.Vector3(0, 0, 0));//设置摄像机焦点
+
+        var ambientLight = new THREE.AmbientLight(0x0c0c0c);//新建环境光
+        scene.add(ambientLight);//将环境光添加到场景中
+		var light = new THREE.SpotLight();//新建聚光灯
+        light.position.set(186, 104, 111);//设置光源位置
+        light.intensity = 1.2;//设置光照强度
+        scene.add(light);//将聚光灯添加到场景中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        render();
+        function render() {
+            requestAnimationFrame(render);//请求绘制下一帧
+            renderer.render(scene, camera);//进行绘制
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

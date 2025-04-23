@@ -1,0 +1,32 @@
+#version 300 es
+precision highp float;				    //给出默认的浮点精度
+uniform sampler2D texC;					//纹理采样器（基础颜色纹理）
+uniform sampler2D texD;					//纹理内容数据（过程纹理）
+uniform sampler2D texD1;                //纹理采样器(细节纹理1)
+uniform sampler2D texD2;                //纹理采样器(细节纹理2)
+uniform sampler2D texD3;                //纹理采样器(细节纹理3)
+uniform sampler2D texD4;                //纹理采样器(细节纹理4)
+in vec2 vTextureCoord; 					//接收从顶点着色器过来的纹理坐标
+out vec4 outColor;                      //输出到的片元颜色
+in vec4 finalLight;                     //接收顶点着色器传过来的最终光照强度
+void main(){
+  float dtScale1=27.36;                 //细节纹理1 的缩放系数
+  float dtScale2=20.00;                 //细节纹理2 的缩放系数
+  float dtScale3=32.34;                 //细节纹理3 的缩放系数
+  float dtScale4=22.39;                 //细节纹理4 的缩放系数
+  float ctSize=257.00;                  //地形灰度图的尺寸（以像素为单位）
+  float factor1=ctSize/dtScale1;        //细节纹理1 的纹理坐标缩放系数
+  float factor2=ctSize/dtScale2;        //细节纹理2 的纹理坐标缩放系数
+  float factor3=ctSize/dtScale3;        //细节纹理3 的纹理坐标缩放系数
+  float factor4=ctSize/dtScale4;        //细节纹理4 的纹理坐标缩放系数
+  vec4 cT = texture(texC,vTextureCoord);            //从基础颜色纹理中采样
+  vec4 dT = texture(texD,vTextureCoord);            //从过程纹理中采样
+  vec4 dT1 = texture(texD1,vTextureCoord*factor1);  //从细节纹理1 中采样
+  vec4 dT2 = texture(texD2,vTextureCoord*factor2);  //从细节纹理2 中采样
+  vec4 dT3 = texture(texD3,vTextureCoord*factor3);  //从细节纹理3 中采样
+  vec4 dT4 = texture(texD4,vTextureCoord*factor4);  //从细节纹理4 中采样
+  outColor = dT1*dT.r+dT2*dT.g+dT3*dT.b+dT4*dT.a;   //叠加细节纹理的颜色值
+  outColor = outColor + cT;                         //叠加基础颜色值
+  outColor = outColor - 0.5;                        //调整整体颜色
+  outColor=finalLight*outColor;
+}

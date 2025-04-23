@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_8</title>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        //新建摄像机
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+		renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+		renderer.shadowMap.enabled = true;			//开启渲染器的投影效果
+		var planeGeometry = new THREE.PlaneGeometry(60, 40);//新建长方形平面
+        var planeMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});//新建平面使用的材质
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);//新建网格对象
+        plane.rotation.x = -0.5 * Math.PI;//设置平面的旋转角度
+        plane.position.x = -10;//设置长方形平面的位置
+        plane.position.y = -5;
+        plane.position.z = -2;
+		plane.receiveShadow =true;
+        scene.add(plane);//将长方形平面添加到场景中
+        camera.position.x = 40;//设置摄像机位置
+        camera.position.y = 40;
+        camera.position.z = 40;
+        camera.lookAt(scene.position);//设置摄像机焦点
+		var radius = 20;//点光源的圆形轨道半径
+		var LightAngle = 0;//点光源旋转的角度
+		var spotLight;
+		
+		
+		function addGeometry(){//添加几何对象的方法
+			var geometryArray=[];//存储几何对象的数组
+			geometryArray.push(new THREE.BoxGeometry(4, 4, 4));//新建正方体
+			geometryArray.push(new THREE.CylinderGeometry(1, 4, 4));//新建圆台
+			geometryArray.push(new THREE.SphereGeometry(2));//新建球体
+			geometryArray.push(new THREE.IcosahedronGeometry(4));//新建正二十面体
+            geometryArray.push(new THREE.OctahedronGeometry(3));//新建正八面体
+            geometryArray.push(new THREE.TetrahedronGeometry(3));//新建正四面体
+            geometryArray.push(new THREE.TorusGeometry(3, 1, 10, 10));//新建圆环
+            geometryArray.push(new THREE.TorusKnotGeometry(3, 0.5, 50, 20));//新建圆环结
+			var material=new THREE.MeshPhongMaterial({color: 0xff0000});
+			for(var i=0;i<geometryArray.length;i++){//遍历所有几何对象
+				var mesh=new THREE.Mesh(geometryArray[i], material);//创建网格对象
+				mesh.castShadow =true;//使网格体可以投射阴影
+				mesh.position.x=-24+Math.floor(i/2)*10;//确定网格对象的位置
+				mesh.position.y=0;
+				mesh.position.z=(i%2==0)?-7:7;
+				scene.add(mesh);//将网格对象添加到场景中
+			}
+		}
+		addGeometry();//添加几何对象
+		function addLightAndGUI(){
+			var ambiColor = "#383845";
+			var ambientLight = new THREE.AmbientLight(ambiColor);
+			scene.add(ambientLight);
+			var spotLightColor  = "#8ba98b";				//聚光灯的颜色值
+			spotLight = new THREE.SpotLight(spotLightColor);//创建聚光灯光源
+			spotLight.position.set(0,40,0);					//设置光源位置
+			spotLight.target = plane;						//设置聚光灯的目标对象
+			spotLight.castShadow =true;						//开启阴影效果
+			spotLight.shadow.mapSize.width=2048;			//阴影贴图宽度设置为1024像素
+			spotLight.shadow.mapSize.height=2048;			//阴影贴图高度设置为1024像素
+			spotLight.shadow.camera.near=0.1;					//设置投影近点
+			spotLight.shadow.camera.far=100;					//设置投影远点
+			spotLight.shadow.camera.fov=60;					//设置投影视场
+			spotLight.angle=0.4;							//设置光柱的宽度
+			scene.add(spotLight);							//将光源添加到场景中
+			var cameraHelper=new THREE.CameraHelper(spotLight.shadow.camera);//观察聚光灯投影方式的辅助工具
+			scene.add(cameraHelper);						//将其添加到场景中
+			var controls = new function () {
+				this.ambiColor = ambiColor;						//环境光颜色
+				this.spotLightColor = spotLightColor;			//聚光灯颜色
+				this.castShadow = true;							//开启投影
+				this.cameraHelperVisible = false;				//使辅助工具不可见
+				this.angle=spotLight.angle;						//光柱的宽度
+			};
+			var gui = new dat.GUI();
+			gui.addColor(controls, 'ambiColor',"环境光颜色").onChange(function (e) {
+				ambientLight.color = new THREE.Color(e);
+			});
+			gui.addColor(controls, 'spotLightColor',"聚光灯颜色").onChange(function (e) {
+				spotLight.color = new THREE.Color(e);
+			});
+			gui.add(controls, 'castShadow',"是否关闭阴影").onChange(function (e) {
+				spotLight.castShadow = e;
+			});
+			gui.add(controls, 'cameraHelperVisible',"投影范围可见").onChange(function (e) {
+				cameraHelper.visible = e;
+			});
+			gui.add(controls, 'angle',0,1,"光柱宽度").onChange(function (e) {
+				spotLight.angle = e;
+			});
+		}
+		addLightAndGUI();
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+		renderScene();//渲染画面
+		function renderScene() {
+			LightAngle+=1;
+			spotLight.position.x =radius*Math.sin(LightAngle/180*Math.PI);
+			spotLight.position.z =radius*Math.cos(LightAngle/180*Math.PI);
+            requestAnimationFrame(renderScene);//请求绘制下一帧
+            renderer.render(scene, camera);//渲染当前画面
+        }}
+		window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

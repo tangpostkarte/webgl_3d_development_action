@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Sample13_28</title>
+
+        <!-- Babylon.js -->
+        
+        <script src="build/cannon.js"></script>
+        <script src="build/babylon.custom.js"></script>
+        
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        function init(){
+
+            var canvas,engine,scene,camera,light;
+            function createScene() {
+                canvas = document.getElementById("renderCanvas");
+                engine = new BABYLON.Engine(canvas, true);
+                scene = new BABYLON.Scene(engine);
+                scene.clearColor = BABYLON.Color3.Purple();
+            
+                camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0, 0, -40), scene);
+                camera.attachControl(canvas, true);
+                camera.checkCollisions = true;
+                camera.applyGravity = true;
+                camera.setTarget(new BABYLON.Vector3(0, 0, 0));
+            
+                light = new BABYLON.DirectionalLight("dir02", new BABYLON.Vector3(0.2, -1, 0), scene);
+                light.position = new BABYLON.Vector3(0, 80, 0);
+            
+                //创建球体材质
+                var sphereMaterial = new BABYLON.StandardMaterial("amiga", scene);
+                sphereMaterial.diffuseTexture = new BABYLON.Texture("textures/amiga.jpg", scene);
+                sphereMaterial.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                sphereMaterial.diffuseTexture.uScale = 5;
+                sphereMaterial.diffuseTexture.vScale = 5;
+                //创建阴影发生器
+                var shadowGenerator = new BABYLON.ShadowGenerator(2048, light);
+                shadowGenerator.useBlurExponentialShadowMap = true;
+                shadowGenerator.useKernelBlur = true;
+                shadowGenerator.blurKernel = 32;
+                
+                scene.enablePhysics(new BABYLON.Vector3(0,-9.8,0), new BABYLON.CannonJSPlugin());
+                
+            
+                //创建球体 并添加刚体
+                var y = 0;
+                for (var index = 0; index < 50; index++) {
+                    var sphere = BABYLON.Mesh.CreateSphere("Sphere0", 16, 3, scene);
+                    sphere.material = sphereMaterial;
+                    sphere.position = new BABYLON.Vector3(Math.random() * 20 - 10, y, Math.random() * 10 - 5);
+                    shadowGenerator.addShadowCaster(sphere);
+                    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1 }, scene);
+                    y += 2;
+                }
+            
+                //创建box 并添加球体
+                for(let i=0;i<10;i++){
+                    var box0 = BABYLON.Mesh.CreateBox("Box0", 3, scene);
+                    box0.position = new BABYLON.Vector3(Math.random() * 20 - 10, 10+y, Math.random() * 10 - 5);
+                    var materialWood = new BABYLON.StandardMaterial("wood", scene);
+                    materialWood.diffuseTexture = new BABYLON.Texture("textures/box.png", scene);
+                    materialWood.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                    box0.material = materialWood;
+                    box0.physicsImpostor = new BABYLON.PhysicsImpostor(box0, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 2, friction: 0.4, restitution: 0.3 }, scene);
+                    shadowGenerator.addShadowCaster(box0);
+                    y ++;
+                }
+                
+                //添加地板
+                var ground = BABYLON.Mesh.CreateBox("Ground", 1, scene);
+                ground.scaling = new BABYLON.Vector3(100, 1, 100);
+                ground.position.y = -5.0;
+                ground.checkCollisions = true;
+                //添加包围盒
+                var border0 = BABYLON.Mesh.CreateBox("border0", 1, scene);
+                border0.scaling = new BABYLON.Vector3(1, 100, 100);
+                border0.position.y = -5.0;
+                border0.position.x = -50.0;
+                border0.checkCollisions = true;
+            
+                var border1 = BABYLON.Mesh.CreateBox("border1", 1, scene);
+                border1.scaling = new BABYLON.Vector3(1, 100, 100);
+                border1.position.y = -5.0;
+                border1.position.x = 50.0;
+                border1.checkCollisions = true;
+            
+                var border2 = BABYLON.Mesh.CreateBox("border2", 1, scene);
+                border2.scaling = new BABYLON.Vector3(100, 100, 1);
+                border2.position.y = -5.0;
+                border2.position.z = 50.0;
+                border2.checkCollisions = true;
+            
+                var border3 = BABYLON.Mesh.CreateBox("border3", 1, scene);
+                border3.scaling = new BABYLON.Vector3(100, 100, 1);
+                border3.position.y = -5.0;
+                border3.position.z = -50.0;
+                border3.checkCollisions = true;
+            
+                var groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+                groundMat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                groundMat.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                groundMat.backFaceCulling = false;
+                ground.material = groundMat;
+                border0.material = groundMat;
+                border1.material = groundMat;
+                border2.material = groundMat;
+                border3.material = groundMat;
+                ground.receiveShadows = true;
+            
+                //给包围盒添加刚体
+                ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, friction: 0.5, restitution: 0.7 }, scene);
+                border0.physicsImpostor = new BABYLON.PhysicsImpostor(border0, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
+                border1.physicsImpostor = new BABYLON.PhysicsImpostor(border1, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
+                border2.physicsImpostor = new BABYLON.PhysicsImpostor(border2, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);
+                border3.physicsImpostor = new BABYLON.PhysicsImpostor(border3, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0 }, scene);  
+            }
+            
+            
+            createScene();
+
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+
+            // Resize
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

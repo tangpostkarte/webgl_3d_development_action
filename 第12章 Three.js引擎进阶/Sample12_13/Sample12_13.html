@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>交叉剪裁</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+	<script type="text/javascript" src="util/dat.gui.min.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+
+<script type="text/javascript">
+    var scene;//创建场景
+    var camera;//创建摄像机
+    var renderer;//创建渲染器变量
+    var ambientLight;//环境光变量
+    var hemisphereLight;//半球光变量
+    var group;//建立物体组
+    var params = { //编辑框变量
+        clipIntersection: true,//是否进行交叉剪裁
+        planeConstant: 0,//设置平面
+        showHelpers: false  //显示辅助框
+    };
+    //定义剪裁平面
+    var clipPlanes = [
+        new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 0 ),
+        new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 0 ),
+        new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 0 )
+    ];
+    var material;
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        scene = new THREE.Scene();//新建场景
+        //新建摄像机
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        //渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: true });//新建渲染器
+		renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+		renderer.shadowMap.enabled = true;			//开启渲染器的投影效果
+        renderer.localClippingEnabled = true; //允许对对象进行剪裁处理
+        //摄像机
+        camera.position.x = -5;//设置摄像机位置
+        camera.position.y = 10;
+        camera.position.z = -5;
+        camera.lookAt(new THREE.Vector3());//设置摄像机焦点
+        scene.add(camera);
+        //添加帮助
+        var helpers = new THREE.Group();
+        helpers.add( new THREE.AxesHelper( 20 ) );
+        helpers.add( new THREE.PlaneHelper( clipPlanes[ 0 ], 30, 0xff0000 ) );
+        helpers.add( new THREE.PlaneHelper( clipPlanes[ 1 ], 30, 0x00ff00 ) );
+        helpers.add( new THREE.PlaneHelper( clipPlanes[ 2 ], 30, 0x0000ff ) );
+        helpers.visible = false;
+        scene.add( helpers );
+
+        addControls();//添加控制方法
+        addLight();//添加半球光源
+		addGeometry();//添加几何对象
+
+        addGUI();
+		renderScene();//渲染画面
+
+
+
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onResize, false );
+
+        //添加鼠标控制
+        function addControls() {
+            var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+//            controls.addEventListener( 'change', renderScene ); //添加监听
+            controls.minDistance = 10;//设置拉伸的最小距离
+            controls.maxDistance = 1000;//设置拉伸的最大距离
+            controls.enablePan = false;//是否可以平移
+            controls.zoomSpeed=3.0;//设置缩放比例
+        }
+        //添加灯光
+        function addLight(){
+            var ambiColor = "#383845";//环境光颜色
+            ambientLight = new THREE.AmbientLight(ambiColor);//新建环境光
+            scene.add(ambientLight);//添加环境光
+            hemisphereLight = new THREE.HemisphereLight(0xffffff,0x000000,1);//创建半球光源 天空光 地面光 强度
+            hemisphereLight.position.set(-10,5,-10);					//设置光源位置
+            hemisphereLight.rotation.x=-Math.PI;                      //使得光源对着物体
+            scene.add(hemisphereLight);
+
+        }
+
+        function onResize() {
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            camera.aspect = ( window.innerWidth / window.innerHeight );
+            camera.updateProjectionMatrix();
+
+        }
+        
+        function addGUI() {
+            var gui = new dat.GUI( { width: 300 } );
+            gui.open();
+
+            var myTitle=gui.addFolder('设置');
+            myTitle.add(params,'clipIntersection').name('剪裁开关').onChange(function (e) {
+                var children = group.children;
+
+                for ( var i = 0; i < children.length; i ++ ) {
+
+                    children[ i ].material.clipIntersection = e;
+                }
+            });
+
+            myTitle.add(params,'planeConstant',-16,16).step(1).name('剪裁平面位置').onChange(function (e) {
+                for ( var j = 0; j < clipPlanes.length; j ++ ) {
+
+                    clipPlanes[ j ].constant = e;
+                }
+            });
+
+            myTitle.add(params,'showHelpers').name('显示辅助剪裁平面').onChange(function (e) {
+                helpers.visible=e;
+                
+            });
+
+
+
+        }
+        
+        //添加几何对象的方法
+        function addGeometry(){
+
+            var texture=["","img/1.png","img/1.png","img/1.png","img/1.png","img/1.png","img/1.png","img/1.png","img/1.png","img/earth.png"];
+            var myColor=["","#e8cd66","#e4c133","#ce9b32","#cd9a2f","#c98f24","#c3760a","#c34900","#ae1601","#ffffff"];
+            group=new THREE.Group();
+            for(var i=1;i<10;i++)
+            {
+                var geometry = new THREE.SphereGeometry( i / 2, 48, 24 );//创建球体
+                var material = new THREE.MeshLambertMaterial( {
+
+                    color: new THREE.Color( myColor[i] ),
+                    side: THREE.DoubleSide,
+                    clippingPlanes: clipPlanes,
+                    clipIntersection: params.clipIntersection,
+                    map: THREE.ImageUtils.loadTexture(texture[i])
+                } );
+                group.add( new THREE.Mesh( geometry, material ) );
+
+            }
+            scene.add(group);
+        }
+
+
+		function renderScene() {
+
+            requestAnimationFrame(renderScene);//请求绘制下一帧
+            renderer.render(scene, camera);//渲染当前画面
+        }}
+		window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

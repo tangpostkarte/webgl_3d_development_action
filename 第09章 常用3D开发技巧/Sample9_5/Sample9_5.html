@@ -1,0 +1,217 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="0">
+    <title>高真实地形</title>
+	<script type="text/javascript" src="js/Matrix.js"></script>
+	<script type="text/javascript" src="js/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/GLUtil.js"></script>	
+	<script type="text/javascript" src="js/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/FrameGlobalVar.js"></script>
+	<script type="text/javascript" src="js/Momnet.js"></script>
+	<script type="text/javascript" src="js/NorMal.js"></script>
+	</head>
+	<body onload="image.onload();">
+		<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+		</canvas>
+		<script>
+			var mon;							//绘制对象
+			var xOffset=0;						//x方向移动步长值
+			var yOffset=0;						//y方向移动步长值
+            var incAngle=0.5;					//旋转角度步长值
+            var currentYAngle=0; 				//绕y轴旋转角度
+            var currentXAngle=0;  				//绕x轴旋转角度
+            var lastClickX=0,lastClickY=0;		//上次触控点X,Y坐标
+            var ismoved=false;					//是否移动标志位
+			var down=false;						//是否点击标志位
+			var sunx=3000;						//光源x坐标
+			var sunz=0;							//光源y坐标
+			var sunRadius=2500;					//光源旋转半径
+			var sunAngle=Math.PI/2;;			//光照初始旋转角度
+			document.onmousedown = function(event) {
+				event.preventDefault();// 阻止浏览器默认事件，重要
+				//如果鼠标在<canvas>内开始移动
+				if(event.target.tagName=="CANVAS")
+				{
+					lastClickX=event.clientX;
+					lastClickY=event.clientY;
+					ismoved=true;
+					down=true;
+				}
+			}
+			document.onmousemove = function(event) {//鼠标移动
+				event.preventDefault();// 阻止浏览器默认事件，重要
+				var x=event.clientX,y=event.clientY;
+				if(ismoved)
+				{
+					down=false;
+					currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+					if(currentXAngle>90) {	currentXAngle=90; }		//设置旋转的角度为90
+					else if(currentXAngle<-0) {currentXAngle=-0;}	//设置旋转的角度为-90
+				}
+				lastClickX=x;
+				lastClickY=y;
+			}
+			document.onmouseup = function(event){
+				ismoved=false;//抬起鼠标
+				if(down) {
+					if(lastClickX<400) { xOffset+=4;}
+					else if(lastClickX>400&&lastClickX<800&&lastClickY<400) { yOffset+=4; }
+					else if(lastClickX>400&&lastClickX<800&&lastClickY>400) { yOffset-=4;}
+					else if(lastClickX>800) { xOffset-=4;}
+				}
+            }
+            //初始化的方法
+			function start(){
+				//获取3D Canvas
+				var canvas = document.getElementById('bncanvas');
+				//获取GL上下文
+				gl = canvas.getContext('webgl2', { antialias: true });
+				if (!gl) //若获取GL上下文失败
+				{
+					alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+					return;
+				}
+				canvas.ontouchstart=function(event){
+                    event.preventDefault();// 阻止浏览器默认事件，重要
+                    //如果鼠标在<canvas>内开始移动
+                    if(event.target.tagName=="CANVAS")
+                    {
+                        lastClickX=event.clientX;
+                        lastClickY=event.clientY;
+                        ismoved=true;
+                        down=true;
+                    }
+				};
+				canvas.ontouchmove = function(event){
+                    event.preventDefault();// 阻止浏览器默认事件，重要
+                    var x=event.clientX,y=event.clientY;
+                    if(ismoved)
+                    {
+                        down=false;
+                        currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+                        currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+                        if(currentXAngle>90) {	currentXAngle=90; }		//设置旋转的角度为90
+                        else if(currentXAngle<-0) {currentXAngle=-0;}	//设置旋转的角度为-90
+                    }
+                    lastClickX=x;
+                    lastClickY=y;
+                }
+				canvas.ontouchend = function(event){
+                    ismoved=false;//抬起鼠标
+                    if(down) {
+                        if(lastClickX<400) { xOffset+=4;}
+                        else if(lastClickX>400&&lastClickX<800&&lastClickY<400) { yOffset+=4; }
+                        else if(lastClickX>400&&lastClickX<800&&lastClickY>400) { yOffset-=4;}
+                        else if(lastClickX>800) { xOffset-=4;}
+				}}
+				//设置视口
+				gl.viewport(0, 0, canvas.width, canvas.height);
+				//设置屏幕背景色RGBA
+				gl.clearColor(1.0,1.0,1.0,1.0);
+				//初始化变换矩阵
+				ms.setInitStack();
+				//设置摄像机
+				ms.setCamera(0,150,220,0,90,0,0,1,0);
+				//设置投影参数
+				ms.setProjectFrustum(-1.5,1.5,-1,1,1,1000);
+                //开启深度检测
+				gl.enable(gl.DEPTH_TEST);
+				// 加载着色器程序
+				loadShaderFile("shader/vertex.bns",0,0);
+				loadShaderFile("shader/fragment.bns",0,1);
+                //如果着色器已加载完毕
+				if(shaderProgArray[0]){
+					mon=new Momnet(gl,shaderProgArray[0]);
+				}else{
+                    //休息10ms后再执行
+					setTimeout(function(){
+					    mon=new Momnet(gl,shaderProgArray[0]);
+					},200);}
+				//加载基础颜色纹理
+				loadImageTexture(gl, "pic/default_c.png",0);
+                //加载过程纹理
+                loadImageTexture(gl, "pic/default_d.png",1);
+				//加载灰色岩石纹理
+				loadImageTexture(gl, "pic/grayRock.png",2);
+				//加载硬泥土纹理
+				loadImageTexture(gl, "pic/hardDirt.png",3);
+				//加载大岩石表面纹理
+				loadImageTexture(gl, "pic/bigRockFace.png",4);
+				//加载绿草皮纹理
+				loadImageTexture(gl, "pic/shortGrass.png",5);
+				//定时调用主绘制方法
+				setInterval("drawFrame();",20);
+			}
+		function drawFrame(){
+				if(!mon){
+					console.log("加载未完成！");//提示信息
+					return;}
+				//改变光源位置
+				sunz=sunRadius*Math.sin(sunAngle);
+				sunx=sunRadius*Math.cos(sunAngle);
+				sunAngle+=0.005;
+				//清除着色缓冲与深度缓冲
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				//保护现场
+				ms.pushMatrix();
+				ms.translate(xOffset,0,yOffset)
+            	ms.rotate(currentXAngle,1,0,0);
+				ms.rotate(currentYAngle,0,1,0);
+				//绘制物体
+				mon.drawSelf(ms,texMap);
+				//恢复现场
+				ms.popMatrix();
+			}
+		</script>
+	<canvas id="canvas1" width="257" height="257">
+            您的浏览器不支持canvas标签
+        </canvas>
+        <script type="text/javascript">
+			var LAND_HIGHEST=198;
+			var LAND_HIGH_ADJUST=5;
+			var result = new Array();
+			var result1 = new Array();
+			var j=0;
+			var k=0;
+            var canvas1 = document.getElementById('canvas1');
+            var ctx1 = canvas1.getContext('2d');
+            image = new Image();
+            image.src = "pic/default.png"
+			var colsPlusOne;
+			var rowsPlusOne;
+            image.onload=function(){
+				colsPlusOne=image.width;
+				rowsPlusOne=image.height;
+                ctx1.drawImage(image,0,0,colsPlusOne,rowsPlusOne);
+				getgray();
+				for(var i=0;i<rowsPlusOne;i++) {
+				    result[i] = new Array();
+					for(var j=0;j<colsPlusOne;j++) {
+					    result[i][j]=result1[k++];
+					}
+				}
+				normals=caleNormalVector(result);
+				start();
+				ctx1.clearRect(0,0,colsPlusOne,rowsPlusOne);
+				return result;
+            }
+			function getgray(){
+			  var imageData = ctx1.getImageData(0,0,colsPlusOne,rowsPlusOne);
+                for(var i=0;i<imageData.data.length;i+=4){
+                    var r=imageData.data[i];
+                    var g=imageData.data[i+1];
+                    var b=imageData.data[i+2];
+                    imageData.data[i+3]=255;
+					var h=(r+g+b)/3;
+				result1[j]=(h/255)*LAND_HIGHEST+LAND_HIGH_ADJUST;
+				j++;
+                }
+			}
+        </script>
+	</body>
+</html>

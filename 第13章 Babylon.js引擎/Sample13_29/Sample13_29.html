@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Sample13_29</title>
+
+        <script src="build/cannon.js"></script>
+        <script src="build/babylon.custom.js"></script>
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        function init()
+        {
+                var canvas,engine,scene,camera,light;
+            
+            //创建场景
+            function createScene() {
+                //初始化引擎，场景
+                canvas = document.getElementById("renderCanvas");
+                engine = new BABYLON.Engine(canvas, true);
+                scene = new BABYLON.Scene(engine);
+                scene.enablePhysics();
+                //创建引擎查看器 用于查看物理效果
+                var physicsViewer = new BABYLON.Debug.PhysicsViewer();
+                //创建物理引擎助手
+                var physicsHelper = new BABYLON.PhysicsHelper(scene);
+                //初始化摄像机
+                var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 16, -32), scene);
+                camera.setTarget(BABYLON.Vector3.Zero());
+                camera.attachControl(canvas, true);
+                //添加光照
+                light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+                light.intensity = 0.7;
+                //添加地面，并绑定刚体
+                var ground = BABYLON.Mesh.CreateGround("ground1", 64, 64, 2, scene);
+                ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 1 }, scene);
+            
+                //利用for循环创建box堆，并绑定刚体
+                var boxSize = 2;
+                var boxPadding = 4;
+                var minXY = -12;
+                var maxXY = 12;
+                var maxZ = 8;
+                var boxParams = { height: boxSize, width: boxSize, depth: boxSize };
+                var boxImpostorParams = { mass: boxSize, restitution: 0, friction: 1 };
+                var boxMaterial = new BABYLON.StandardMaterial("boxMaterial");
+                boxMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
+                for (var x = minXY; x <= maxXY; x += boxSize + boxPadding) {
+                    for (var z = minXY; z <= maxXY; z += boxSize + boxPadding) {
+                        for (var y = boxSize / 2; y <= maxZ; y += boxSize) {
+                            var boxName = "box:" + x + ',' + y + ',' + z;
+                            var box = BABYLON.MeshBuilder.CreateBox(boxName, boxParams, scene);
+                            box.position = new BABYLON.Vector3(x, y, z);
+                            box.material = boxMaterial;
+                            box.physicsImpostor = new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, boxImpostorParams, scene);
+                            //展示box刚体框
+                            physicsViewer.showImpostor(box.physicsImpostor);
+                        }
+                    }
+                }
+            
+                //创建爆炸位置
+                var origin = new BABYLON.Vector3(0, 0, 0);
+                //爆炸半径
+                var radius = 8;
+                //爆炸强度
+                var strength = 20;
+            
+                //使用applyRadialExplosionImpulse实现爆炸效果
+                setTimeout(function (origin) {
+                    //创建爆炸事件
+                    var event = physicsHelper.applyRadialExplosionImpulse(
+                        origin,
+                        radius,
+                        strength,
+                        BABYLON.PhysicsRadialImpulseFalloff.Linear
+                    );
+                    //获取爆炸事件数据
+                    var eventData = event.getData();
+                    //展示爆炸调试效果
+                    var debugData = showExplosionDebug(eventData);
+                    //在展示爆炸调试1500ms后隐藏爆炸调试效果 
+                    setTimeout(function (debugData) {
+                        hideExplosionDebug(debugData);
+                        //取消爆炸事件
+                        event.dispose();
+                    }, 1500, debugData);
+                }, 1000, origin);
+                
+                // //使用引力场实现吸引效果
+                // var gravitationalFieldOrigin = new BABYLON.Vector3(0, 6, 10);
+                // setTimeout(function() {
+                //     var event = physicsHelper.gravitationalField(
+                //         gravitationalFieldOrigin,
+                //         radius,
+                //         strength,
+                //         BABYLON.PhysicsRadialImpulseFalloff.Linear
+                //     );
+                //     event.enable();
+
+                //     var eventData = event.getData();
+                //     var sphere = eventData.sphere;
+                //     addMaterialToSphere(sphere);
+                //     sphere.isVisible = true;
+            
+                //     setTimeout(function (sphere) {
+                //         event.disable();
+                //         sphere.isVisible = false;
+                //         event.dispose();
+                //     }, 3000, sphere);
+                // }, 8000);
+
+                //创建爆炸调试球体方法
+                function addMaterialToSphere(sphere) {
+                    var sphereMaterial = new BABYLON.StandardMaterial("sphereMaterial", scene);
+                    sphereMaterial.alpha = 0.5;
+                    sphere.material = sphereMaterial;
+                }
+                //展示爆炸事件调试
+                function showExplosionDebug(data) {
+                    //添加爆炸调试球体
+                    addMaterialToSphere(data.sphere);
+                    data.sphere.isVisible = true;
+                    //添加射线
+                    var rayHelpers = [];
+                    if (data.rays.length) {
+                        for (var i = 0; i < data.rays.length; i++) {
+                            var rayHelper = new BABYLON.RayHelper(data.rays[i]);
+                            rayHelper.show(scene, new BABYLON.Color3(1, 1, 0));
+                            rayHelpers.push(rayHelper);
+                        }
+                    }
+                    return {
+                        sphere: data.sphere,
+                        rays: data.rays,
+                        rayHelpers: rayHelpers,
+                    };
+                }
+                //隐藏爆炸事件调试器
+                function hideExplosionDebug(debugData) {
+                    debugData.sphere.isVisible = false;
+                    if (debugData.rayHelpers.length) {
+                        for (var i = 0; i < debugData.rayHelpers.length; i++) {
+                            debugData.rayHelpers[i].hide();
+                        }
+                    }
+                }
+
+            };
+            //创建场景
+            createScene()
+            //创建循环渲染队列
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+            //添加窗体自适应
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

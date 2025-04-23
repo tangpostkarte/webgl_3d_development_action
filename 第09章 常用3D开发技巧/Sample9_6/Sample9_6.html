@@ -1,0 +1,187 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Spinning WebGL Box</title>
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>	
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+	<script type="text/javascript" src="js/Desert.js"></script>
+	<script type="text/javascript" src="js/Tree.js"></script>
+	<script type="text/javascript" src="js/TreeGroup.js"></script>
+	<script type="text/javascript" src="js/SingleTree.js"></script>
+	<script>
+			var tr;
+			var canvas;
+			var cx=0;
+			var cy=2;
+			var cz=24;
+			var  TOUCH_SCALE_FACTOR = 180/320;//角度缩放比例
+			var cr=24;//摄像机半径
+			var cAngle=0;
+			var mPreviousY;//上次的触控位置Y坐标
+			var mPreviousX;//上次的触控位置X坐标
+			var down=false;//是否移动标志位
+			function dianji()
+			{
+				document.onmousedown = function(event)
+				{	down=true;//按下鼠标
+					mPreviousX=event.pageX;//获取触控点x坐标
+					mPreviousY=event.pageY;//获取触控点y坐标
+				}
+				document.onmousemove = function(event)//鼠标移动
+				{	
+					var x=event.pageX,y=event.pageY;
+					if(down)
+					{
+	
+						var dy = y - mPreviousY;//计算触控笔Y位移
+						var dx = x - mPreviousX;//计算触控笔X位移
+						cAngle+=dx * TOUCH_SCALE_FACTOR;
+						cx=Math.sin(Math.PI/180*cAngle)*cr;
+						cz=Math.cos(Math.PI/180*cAngle)*cr;
+						cy+=dy/10.0;
+					}
+					mPreviousY = y;//记录触控笔位置
+					mPreviousX = x;//记录触控笔位置
+				}
+				document.onmouseup = function(event)
+				{
+					down=false;//抬起鼠标
+				}
+			}
+	
+		function dianji1(){
+            canvas = document.getElementById('bncanvas');
+			canvas.ontouchstart=function(e){
+				down=true;
+				e.preventDefault();
+				var touch = e.touches[0];
+			//获取当前触控点的坐标，等同于MouseEvent事件的clientX/clientY
+				mPreviousX=touch.clientX;//获取触控点x坐标
+				mPreviousY=touch.clientY;//获取触控点y坐标
+			};
+			canvas.ontouchmove = function(e){
+				e.preventDefault();
+				var touch = e.touches[0];
+				var x=touch.clientX,y=touch.clientY;
+					if(down)
+					{
+	
+						var dy = y - mPreviousY;//计算触控笔Y位移
+						var dx = x - mPreviousX;//计算触控笔X位移
+						cAngle+=dx * TOUCH_SCALE_FACTOR;
+						cx=Math.sin(Math.PI/180*cAngle)*cr;
+						cz=Math.cos(Math.PI/180*cAngle)*cr;
+						cy+=dy/10.0;
+					}
+					mPreviousY = y;//记录触控笔位置
+					mPreviousX = x;//记录触控笔位置
+			};
+			canvas.ontouchend = function(e){
+				down=false;
+			};
+		}
+			//初始化的方法
+		function start()
+			{
+                //获取3D Canvas
+                var canvas = document.getElementById('bncanvas');
+                //获取GL上下文
+                gl = canvas.getContext('webgl2', { antialias: true });
+                if (!gl) //若获取GL上下文失败
+                {
+                    alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                    return;
+                }
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(1.0,1.0,1.0,1.0);  
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        //设置投影参数
+	        ms.setProjectFrustum(-1.5,1.5,-1,1,1,1000);
+	        gl.enable(gl.DEPTH_TEST);//开启深度检测
+			gl.enable(gl.CULL_FACE);
+                //加载着色器程序
+                loadShaderFile("shader/vertex.bns",0,0);//带光照的物体
+                loadShaderFile("shader/fragment.bns",0,1);//带光照的物体
+			if(shaderProgArray[0])//如果着色器已加载完毕
+			{
+				tr=new Tree(gl,shaderProgArray[0]);
+			}
+			else
+			{
+				setTimeout(function(){	tr=new Tree(gl,shaderProgArray[0]);
+										
+									},90); //休息90ms后再执行
+			}
+			loadImageTexture(gl, "pic/skycubemap_back.jpg","back");
+			loadImageTexture(gl, "pic/skycubemap_down.jpg","down");
+			loadImageTexture(gl, "pic/skycubemap_front.jpg","front");
+			loadImageTexture(gl, "pic/skycubemap_left.jpg","left");
+			loadImageTexture(gl, "pic/skycubemap_right.jpg","right");
+			loadImageTexture(gl, "pic/skycubemap_up.jpg","up");
+			setInterval("drawFrame();",20);
+			}
+	function drawFrame()
+			{
+				dianji();
+				dianji1();
+				ms.setCamera(cx,cy,cz,0,0,0,0,1.0,0.0);  
+				if(!tr)
+				{
+				console.log("加载未完成！");//提示信息
+				return;
+				}
+				//清除着色缓冲与深度缓冲
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
+				//保护现场
+				ms.pushMatrix(); 
+				ms.translate(0, 0, -28+0.35);
+				tr.drawSelf(ms,texMap['back']);
+				ms.popMatrix();              
+				//绘制天空盒前面
+				ms.pushMatrix();
+				ms.translate(0, 0, 28-0.35);
+				ms.rotate(180, 0, 1, 0);
+				tr.drawSelf(ms,texMap['front']);
+				ms.popMatrix(); 
+				//绘制天空盒左面
+				ms.pushMatrix();
+				ms.translate(-28+0.35, 0, 0);
+				ms.rotate(90, 0, 1, 0);
+				tr.drawSelf(ms,texMap['left']);
+				ms.popMatrix(); 
+				//绘制天空盒右面
+				ms.pushMatrix();
+				ms.translate(28-0.35, 0, 0);
+				ms.rotate(-90, 0, 1, 0);
+				tr.drawSelf(ms,texMap['right']);
+				ms.popMatrix();
+				//绘制天空盒下面
+				ms.pushMatrix();
+				ms.translate(0, -28+0.35, 0);
+				ms.rotate(-90, 1, 0, 0);
+				tr.drawSelf(ms,texMap['down']);
+				ms.popMatrix(); 
+				//绘制天空盒上面
+				ms.pushMatrix();
+				ms.translate(0, 28-0.35, 0);
+				ms.rotate(90, 1, 0, 0);
+				tr.drawSelf(ms,texMap['up']);
+				ms.popMatrix(); 
+    	
+			}
+		</script>
+	</head>
+	
+	<body onload="start();">
+		<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+		</canvas>
+		
+	</body>
+</html>

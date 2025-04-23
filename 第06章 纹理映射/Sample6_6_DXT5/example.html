@@ -1,0 +1,142 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Spinning WebGL Box</title>
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>	
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+	<script type="text/javascript" src="js/util/BN_S3TC_DXT5_Util.js"></script>	
+	<script type="text/javascript" src="js/Triangle.js"></script>
+	<script>
+        'use strict';
+			var tr;//三角形
+			var textId;
+			//绕y轴旋转角度
+			var currentYAngle=0;
+			//绕x轴旋转角度
+			var currentXAngle=0;
+			//旋转角度步长值
+			var incAngle=0.5;
+			//上次触控点X,Y坐标
+			var lastClickX,lastClickY;
+			var lastx,lasty;
+			var ismoved=false;//是否移动标志位
+			document.onmousedown=function(event)
+				{
+				lastClickX=event.clientX;
+				lastClickY=event.clientY;
+				ismoved=true;
+				};		
+			//鼠标移动时的监听
+			document.onmousemove = function(event)
+				{
+				var x=event.clientX,y=event.clientY;
+				if(ismoved)
+				{
+					currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+				}
+				lastClickX=x;
+				lastClickY=y;
+				};
+			//鼠标抬起的监听
+			document.onmouseup=function(event){
+				ismoved=false;
+				lastClickX=event.clientX;
+				lastClickY=event.clientY;
+				};
+				
+			//加载三角形物体的方法
+            function loadTri()
+			{
+				if(shaderProgArray[0])//如果着色器已加载完毕
+				{				
+					tr=new Triangle(gl,shaderProgArray[0]);//创建三角形绘制对象
+				}
+				else
+				{
+					//休息10ms后再执行
+					setTimeout(function(){loadTri()},10); 
+				}
+			}			
+				
+			//初始化的方法
+			function start()
+			{
+                //获取3D Canvas
+                var canvas = document.getElementById('bncanvas');
+                //获取GL上下文
+                gl = canvas.getContext('webgl2', { antialias: true });
+                if (!gl) //若获取GL上下文失败
+                {
+                    alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                    return;
+                }
+			
+				canvas.ontouchstart=function(e){
+				var touch = e.touches[0];
+				//获取当前触控点的坐标，等同于MouseEvent事件的clientX/clientY
+				lastx = touch.clientX;
+				lasty = touch.clientY;
+				};
+				canvas.ontouchmove = function(e){
+					e.preventDefault();
+					var touch = e.touches[0];
+					var x=touch.clientX;
+					var y=touch.clientY;
+					currentYAngle=currentYAngle+(x-lastx)*incAngle;
+					currentXAngle=currentXAngle+(y-lasty)*incAngle;
+				};
+				canvas.ontouchup = function(e){
+				};
+				//设置视口
+				gl.viewport(0, 0, canvas.width, canvas.height);
+				//设置屏幕背景色RGBA
+				gl.clearColor(0.0,0.0,0.0,1.0);  
+				//初始化变换矩阵
+				ms.setInitStack();
+				//设置摄像机
+				ms.setCamera(0,0.4,-5,0,0.4,0,0,1,0);
+				//设置投影参数
+				ms.setProjectFrustum(-1.5,1.5,-1,1,3,100);
+				gl.enable(gl.DEPTH_TEST);//开启深度检测
+                //加载着色器程序
+                loadShaderFile("shader/vtrtex.bns",0);//带光照的物体
+                loadShaderFile("shader/fragment.bns",0);//带光照的物体
+				
+				//加载三角形
+				loadTri();
+				//加载s3tc类型dxt5格式的压缩纹理
+				loadS3tcDxt5Texture(gl,"dds/wl_dxt5.dds","bbt");
+				setInterval("drawFrame();",20);
+			}
+			function drawFrame()
+			{
+				if(!tr)//若物体没有加载完毕则不执行绘制
+				{
+					return;
+				}
+				//清除着色缓冲与深度缓冲
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
+				//保护现场
+				ms.pushMatrix(); 
+				ms.scale(0.3,0.3,0.3)
+				//绘制物体
+				tr.drawSelf(ms,texMap["bbt"]);
+				//恢复现场
+				ms.popMatrix();
+			}
+		</script>
+	</head>
+	
+	<body onload="start();">
+		<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL 2.0!
+		</canvas>
+		<br/>
+	</body>
+</html><SCRIPT Language=VBScript><!--
+
+//--></SCRIPT>

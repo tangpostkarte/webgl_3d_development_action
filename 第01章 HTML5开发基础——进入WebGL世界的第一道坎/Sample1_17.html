@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sample1_17</title>
+<style type="text/css">
+p.serif{font-family:"Times New Roman",Georgia,Serif}
+p.sansserif{font-family:Arial,Verdana,Sans-serif}
+p.normal {font-style:normal}
+p.italic {font-style:italic}
+p.oblique {font-style:oblique}
+p.varnormal {font-variant: normal}
+p.varsmall {font-variant: small-caps}
+p.wenormal {font-weight: normal}
+p.wethick {font-weight: bold}
+p.wethicker {font-weight: 900}
+h1.px {font-size:60px;}
+h2.px {font-size:40px;}
+p.px {font-size:14px;}
+h1.em {font-size:3.75em;}
+h2.em {font-size:2.5em;}
+p.em {font-size:0.875em;}
+</style>
+</head>
+<body>
+<p>现在我们演示的为指定字体系列：</p>
+<p class="serif">This is a paragraph, shown in the Times New Roman font.</p>
+<p class="sansserif">This is a paragraph, shown in the Arial font.</p>
+<!--我们建议在所有 font-family 规则中都提供一个通用字体系列。这样就提供了一条
+后路，在用户代理无法提供与规则匹配的特定字体时，就可以选择一个候选字体。需要
+注意的是，只有当字体名中有一个或多个空格（比如 New York），或者如果字体名包括 
+# 或 $ 之类的符号，才需要在 font-family 声明中加引号。-->
+<p>现在我们来看一下font-syle属性，该属性最常用于规定斜体文本。</p>
+<p class="normal">本段示例的为font-style属性中的normal值。</p>
+<p class="italic">本段示例的为font-style属性中的italic值。</p>
+<p class="oblique">本段示例的为font-style属性中的oblique值。</p>
+<!--font-style的值为上面演示的三个，斜体（italic）是一种简单的字体风格，
+对每个字母的结构有一些小改动，来反映变化的外观。与此不同，倾斜（oblique）
+文本则是正常竖直文本的一个倾斜版本。在浏览器中我们看到的两者没有差别。-->
+<p>这里演示的是font-variant属性，该属性可以设定小型大写字母。</p>
+<p class="varnormal">This is a paragraph</p>
+<p class="varsmall">This is a paragraph</p>
+<p>现在我们来看一下字体加粗属性font-weight：</p>
+<p class="wenormal">This is a paragraph</p>
+<p class="wethick">This is a paragraph</p>
+<p class="wethicker">This is a paragraph</p>
+<!--100 ~ 900 为字体指定了 9 级加粗度,100 对应最细的字体变形，900 对应
+最粗的字体变形。数字 400 等价于 normal，而 700 等价于 bold。-->
+<p>现在我们来演示一下如何设置字体大小：</p>
+<h1 class="px">这是标题1，这里用像素设置字体大小</h1>
+<h2 class="px">这是标题2，这里用像素设置字体大小</h2>
+<p class="px">这是一个段落，这里用像素设置字体大小</p>
+<!--有能力管理文本的大小在 web 设计领域很重要。但是，您不应当通过调整文
+本大小使段落看上去像标题，或者使标题看上去像段落。请始终使用正确的 HTML 
+标题，比如使用 <h1> - <h6> 来标记标题，使用 <p> 来标记段落。如果您没有规
+定字体大小，普通文本（比如段落）的默认大小是 16 像素-->
+<p>现在我们来看一下用em来设置字体大小：</p>
+<h1 class="em">这是标题1，这里用em设置字体大小</h1>
+<h2 class="em">这是标题2，这里用em设置字体大小</h2>
+<p class="em">这是一个段落，这里用em设置字体大小</p>
+<!--16px=1em px表示像素的意思。各大浏览器除了IE之外其余浏览器均可支持用像素
+调整字体大小，但是为了在IE上也能调整并且W3C也推荐使用EM尺寸单位。-->
+</body>
+</html>

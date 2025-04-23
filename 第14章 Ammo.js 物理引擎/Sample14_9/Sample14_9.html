@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample13_9</title>
+	<script type="text/javascript" src="util/ammo.js"></script>
+    <script type="text/javascript" src="util/three.js"></script>
+	<script type="text/javascript" src="util/dat.GUI.js"></script>
+	<script type="text/javascript" src="util/Detector.js"></script>
+	<script type="text/javascript" src="util/TextureLoader.js"></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<div id="container">
+</div>
+<script type="text/javascript">
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+		Ammo().then(function(Ammo) {
+		if ( ! Detector.webgl ) {
+            Detector.addGetWebGLMessage();
+            document.getElementById( 'container' ).innerHTML = "";
+        }
+		
+			//绘制图形用到的变量
+			var container,scene,camera,renderer;
+			var cube;
+			var clock = new THREE.Clock();
+			
+			var transform = new Ammo.btTransform();
+			//模拟物理时用到的变量
+			var collisionConfiguration;
+			var dispatcher;
+			var broadphase;
+			var solver;
+			var dynamicsWorld;
+			var rigidBodies = [];
+			var plane;
+			var material;
+			var shape;
+			var loader = new THREE.TextureLoader();
+			
+			var box_left;
+			var box_right;
+			var cylinder;
+			var cone;
+			var m_bsc_behind,m_bsc_front,m_bsc_left,m_bsc_right,m_bsc_top,m_bsc_bottom;
+			
+			var box_top,box_bottom,box_left,box_right,box_front,box_behind;
+			init();
+            animate();
+			function init() {
+				initGraphics();
+				initPhysics();
+				createObjects();
+            }
+			function initGraphics() {
+				container = document.getElementById( 'container' );
+				scene = new THREE.Scene();//新建场景
+				//新建摄像机位置
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				renderer = new THREE.WebGLRenderer();//新建渲染器
+				renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+				renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+				camera.position.x = 25;//设置摄像机位置
+				camera.position.y = 25;
+				camera.position.z = 25;
+				camera.lookAt(scene.position);//设置摄像机焦点
+
+				var pointLight = new THREE.PointLight("#ffffff"); 	//创建聚光灯光源
+				pointLight.position.set(50,50,50);
+				scene.add(pointLight);
+				container.appendChild( renderer.domElement );
+            }
+			function initPhysics() {
+				collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();//创建碰撞检测配置信息对象
+				dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );//创建碰撞检测算法分配者对象，其功能为扫描所有的碰撞检测对，并确定适用的检测策略对应的算法
+				//设置整个物理世界的边界信息
+				var worldAabbMin = new Ammo.btVector3(-10000, -10000, -10000);
+				var worldAabbMax = new Ammo.btVector3(10000, 10000, 10000);
+				var maxProxies = 1024;
+				//创建碰撞检测粗测阶段的加速算法对象
+				var overlappingPairCache =new Ammo.btAxisSweep3(worldAabbMin, worldAabbMax, maxProxies);
+				//创建推动约束解决者对象
+				var solver = new Ammo.btSequentialImpulseConstraintSolver();
+				//创建物理世界对象
+				dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver,collisionConfiguration);
+				//设置重力加速度
+				dynamicsWorld.setGravity(new Ammo.btVector3(0, 0, 0));///
+            }
+			
+			function createObjects() {
+				//创建地板的网格对象和刚体的相关代码
+				loader.load('textures/floor.jpg',function ( texture ){
+					texture.wrapS = THREE.RepeatWrapping;  
+					texture.wrapT = THREE.RepeatWrapping;  
+					texture.repeat.set( 8, 8 );
+					var planePos = new THREE.Vector3(0,0,0);
+					var planeQuat = new THREE.Quaternion(0,0,0,1);
+					var planeMaterial=new THREE.MeshBasicMaterial({map: texture});//创建基本材质
+					plane=new THREE.Mesh( new THREE.PlaneGeometry(160, 160, 4, 4), planeMaterial );
+					plane.rotation.x = -0.5 * Math.PI;
+					var planeShape=new Ammo.btStaticPlaneShape(new Ammo.btVector3(0, 1, 0), 0);
+					createRigidBody( plane, planeShape, 0 , planePos,planeQuat );
+				});
+				//创建立方体的网格对象和刚体的相关代码
+				loader.load('textures/box.jpg',function ( texture ){
+					//------------------------中间静态的立方体-------------------------
+					material = new THREE.MeshPhongMaterial({map:texture});//创建基本材质
+					var sx=2,sy=2,sz=2;mass=4.5;
+					var pos_center = new THREE.Vector3(0,8,0);
+					var quat = new THREE.Quaternion(0,0,0,1);
+					shape = new Ammo.btBoxShape( new Ammo.btVector3( sx*0.5, sy*0.5, sz*0.5) );
+					box_center = new THREE.Mesh( new THREE.BoxGeometry( sx, sy, sz, 1, 1, 1 ), material );
+					createRigidBody( box_center, shape, 0, pos_center, quat );
+					//------------------------上方的立方体------------------------------
+					var pos_top = new THREE.Vector3(0,14,0);
+					box_top = box_center.clone();
+					createRigidBody( box_top, shape, mass, pos_top, quat );
+
+					var transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(0, 4, 0));//设置节点位置
+					var transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					var q= new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1).normalize(), Math.PI/2);//绕Z轴旋转90度的四元数
+					transformA.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					transformB.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					
+					m_bsc_top = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_top.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_top);//将关节添加到物理世界中
+					m_bsc_top.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_top.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					//------------------------下方的立方体------------------------------
+					var pos_bottom= new THREE.Vector3(0,2,0);
+					box_bottom = box_center.clone();
+					createRigidBody( box_bottom, shape, mass, pos_bottom, quat );
+
+					var transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(0, -4, 0));//设置节点位置
+					var transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					var q= new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1).normalize(), Math.PI/2);//绕Z轴旋转90度的四元数
+					transformA.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					transformB.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					
+					m_bsc_bottom = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_bottom.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_bottom);//将关节添加到物理世界中
+					m_bsc_bottom.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_bottom.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					
+					//--------------------------创建左侧的正方体---------------------------
+					var pos_left= new THREE.Vector3(-8,8,0);
+					box_left = box_center.clone();
+					createRigidBody(box_left, shape, mass, pos_left, quat );
+
+					transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(-4, 0, 0));//设置节点位置
+					transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					m_bsc_left = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_left.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_left);//将关节添加到物理世界中
+					m_bsc_left.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_left.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					
+					
+					//--------------------------创建右侧的正方体---------------------------
+					var pos_right= new THREE.Vector3(8,8,0);
+					box_right = box_center.clone();
+					createRigidBody( box_right, shape, mass, pos_right, quat );
+
+					transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(4, 0, 0));//设置节点位置
+					transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					m_bsc_right = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_right.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_right);//将关节添加到物理世界中
+					m_bsc_right.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_right.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					
+					//--------------------------创建前方的正方体---------------------------
+					var pos_front= new THREE.Vector3(0,8,8);
+					box_front = box_center.clone();
+					createRigidBody( box_front, shape, mass, pos_front, quat );
+
+					transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(0, 0, 4));//设置节点位置
+					transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					var q= new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0).normalize(), Math.PI/2);//绕Z轴旋转90度的四元数
+					transformA.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					transformB.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					
+					m_bsc_front = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_front.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_front);//将关节添加到物理世界中
+					m_bsc_front.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_front.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					
+					//--------------------------创建后方的正方体---------------------------
+					var pos_behind= new THREE.Vector3(0,8,-8);
+					box_behind = box_center.clone();
+					createRigidBody( box_behind, shape, mass, pos_behind, quat );
+
+					transformA = new Ammo.btTransform();//初始化变换transformA
+					transformA.setIdentity();
+					transformA.setOrigin( new Ammo.btVector3(0, 0, -4));//设置节点位置
+					transformB = new Ammo.btTransform();
+					transformB.setIdentity();//初始化变换transformB
+					
+					var q= new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0).normalize(), Math.PI/2);//绕Z轴旋转90度的四元数
+					transformA.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					transformB.setRotation(new Ammo.btQuaternion(q.x,q.y,q.z,q.w));
+					
+					m_bsc_behind = new Ammo.btSliderConstraint(box_center.userData.physicsBody,box_behind.userData.physicsBody, transformA, transformB, true);//创建上侧滑动关节
+					dynamicsWorld.addConstraint(m_bsc_behind);//将关节添加到物理世界中
+					m_bsc_behind.setLowerLinLimit(-3);//设置关节移动的最小距离	关节的上侧方向
+					m_bsc_behind.setUpperLinLimit(3);//设置关节移动的最大距离  关节的下侧方向
+					
+					
+					
+				});
+				//创建圆柱体的网格对象和刚体的相关代码   高16 半径为0.5
+				loader.load('textures/muwen.jpg',function ( texture ){
+					var Pos = new THREE.Vector3(0,8,0);
+					var quat = new THREE.Quaternion(0,0,0,1);
+					//var q= new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1).normalize(), Math.PI/2);//绕Z轴旋转90度的四元数
+					//var Quat = new THREE.Quaternion(q.x,q.y,q.z,q.w);
+					var mass=0;
+					var cylinderMaterial=new THREE.MeshBasicMaterial({map: texture});//创建基本材质
+					cylinder=new THREE.Mesh( new THREE.CylinderGeometry(0.5, 0.5, 16,20,20), cylinderMaterial );
+					cylinder.position.set(0,8,0);
+					scene.add(cylinder);
+	
+					cylinder1=cylinder.clone();
+					cylinder1.rotation.x = Math.PI/2;
+					scene.add(cylinder1);
+					
+					cylinder2=cylinder1.clone();
+					cylinder2.rotation.z = Math.PI/2;
+					scene.add(cylinder2);
+					
+				});
+				
+			}
+			function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
+				var isDynamic = (mass != 0);//物体是否可以运动
+				var localInertia = new Ammo.btVector3(0, 0, 0);//惯性向量
+				if(isDynamic) //如果物体可以运动
+				{
+					physicsShape.calculateLocalInertia(mass, localInertia);//计算惯性
+				}
+				var startTransform = new Ammo.btTransform();//创建刚体的初始变换对象
+				startTransform.setIdentity();//变换初始化
+				threeObject.position.set(pos.x, pos.y, pos.z);
+				startTransform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );//设置初始的位置
+				startTransform.setRotation(new Ammo.btQuaternion(quat.x,quat.y,quat.z,quat.w));
+				//创建刚体的运动状态对象
+				var myMotionState = new Ammo.btDefaultMotionState(startTransform);
+				//创建刚体信息对象
+				var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, myMotionState, physicsShape, localInertia);
+				var body = new Ammo.btRigidBody(rbInfo);//创建刚体
+				body.setRestitution(0);//设置反弹系数
+				body.setFriction(0.2);//设置摩擦系数
+				body.isActive=true;
+				threeObject.userData.physicsBody=body;
+				console.log(threeObject.userData);
+				scene.add(threeObject);
+				if(isDynamic){
+				rigidBodies.push(threeObject);
+				}
+				dynamicsWorld.addRigidBody(body);//将刚体添加进物理世界
+
+            }
+			function animate() {
+                requestAnimationFrame( animate );
+                render();
+            }
+            function render() {
+            	var deltaTime = clock.getDelta();
+            	updatePhysics( deltaTime );
+                renderer.render( scene, camera );
+            }
+			function updatePhysics( deltaTime ) {
+				dynamicsWorld.stepSimulation( deltaTime, 10 );
+			    for ( var i = 0; i <rigidBodies.length; i++ ) {
+			    	var objThree = rigidBodies[i];
+			    	var objPhys = objThree.userData.physicsBody;	
+					var ms = objPhys.getMotionState();
+					if ( ms ) {
+			        	ms.getWorldTransform(transform);
+						var p = transform.getOrigin();
+						var q = transform.getRotation();
+						objThree.position.set( p.x(), p.y(), p.z() );
+						objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			      	}
+			    }
+			}
+			document.onmousedown=function(event)
+			{
+			    var x=event.clientX;
+				if(x<window.innerWidth/2)//鼠标点击页面左侧，箱子向四周滑动
+				{
+					box_right.userData.physicsBody.setActivationState(4);
+					box_right.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(1,0,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_left.userData.physicsBody.setActivationState(4);
+					box_left.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(-1,0,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_front.userData.physicsBody.setActivationState(4);
+					box_front.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,0,1));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_behind.userData.physicsBody.setActivationState(4);
+					box_behind.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,0,-1));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_top.userData.physicsBody.setActivationState(4);
+					box_top.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,1,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_bottom.userData.physicsBody.setActivationState(4);
+					box_bottom.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,-1,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+				}
+				if(x>window.innerWidth/2)
+				{
+					console.log("youbian");
+					box_right.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(-1,0,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_left.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(1,0,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_front.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,0,-1));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_behind.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,0,1));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_top.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,-1,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+					box_bottom.userData.physicsBody.setLinearVelocity(new Ammo.btVector3(0,1,0));//箱子直线运动的速度--Vx,Vy,Vz三个分量
+				}
+			};
+    });}
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

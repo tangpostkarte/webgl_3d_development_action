@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_30</title>
+    <script type="text/javascript" src="util/three.js"></script>
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <script type="text/javascript" src="util/AssimpLoader.js "></script>
+    <style>
+        body{margin: 0;overflow: hidden;}
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+<script type="text/javascript">
+    var scene;//场景变量
+    var renderer;//新建渲染器变量
+    var camera;//摄像机变量
+    var mesh;//球体
+    var animation;//新建动画对象
+    //当网页加载完成后运行的JavaScript方法
+    function init() {
+        initScene();//初始化场景
+		addMaterial();//添加物体
+        addControls();//添加鼠标控制
+        setTimeout(function () {
+            addLight();
+        },500);
+
+		//将渲染结果添加到网页的元素中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        window.addEventListener( 'resize', onWindowResize, false );//窗口变化监听
+
+        renderScene();//进行渲染
+
+    }
+
+    function addLight() {
+        var directionLight = new THREE.DirectionalLight( 0xffffff,1.0);//新建方向光
+        directionLight.position.set( 0, 4, 4 );//设置方向光位置
+        directionLight.lookAt(mesh.position);
+        scene.add( directionLight );
+        var ambientLight=new THREE.AmbientLight(0x8888fff);//新建环境光
+        scene.add( ambientLight );
+
+    }
+    //添加鼠标控制
+    function addControls() {
+        var controls = new THREE.OrbitControls( camera, renderer.domElement );//添加鼠标旋转放大的控制
+        controls.minDistance = 40;//设置拉伸的最小距离
+        controls.maxDistance = 1000;//设置拉伸的最大距离
+        controls.enablePan = true;//是否可以平移
+        controls.zoomSpeed=3.0;//设置缩放比例
+    }
+
+    function onWindowResize() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        camera.aspect = width / height;//获得当前摄像机缩放比
+        camera.updateProjectionMatrix();//更新矩阵
+        renderer.setSize( width, height );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();//新建场景
+        //新建渲染器
+        renderer = new THREE.WebGLRenderer({ antialias: false } );//新建渲染器并关闭默认抗锯齿
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置渲染窗口大小
+
+        //新建摄像机位置
+        camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.x = 1000;//设置摄像机位置
+        camera.position.y = 0;
+        camera.position.z = 0;
+        camera.lookAt(new THREE.Vector3(0,0,0));//设置摄像机焦点
+    }
+
+    function addMaterial(){//添加材质和可视化界面的方法
+        var loader = new THREE.AssimpLoader();//Assimp加载器
+        loader.load( 'assimp/Octaminator.assimp', function ( assimp ) {//设置加载地址
+            mesh=assimp.object;//获得模型
+            mesh.position.x=-100;
+            mesh.position.y = 0;
+            mesh.rotation.x = Math.PI / 2;
+            mesh.rotation.y = -Math.PI / 2;
+            mesh.rotation.z = Math.PI / 2;
+            mesh.scale.set(0.5,0.5,0.5);
+            animation=assimp.animation;//获得动画
+            scene.add( mesh );
+        });
+    }
+
+
+    function renderScene() {
+
+        renderer.render( scene, camera );
+
+        if(animation)//如果有动画
+        {
+            animation.setTime(Date.now() / 1000 );//设置动画更新间隔
+        }
+        requestAnimationFrame(renderScene);
+    }
+	
+    window.onload = init;//当网页加载后执行init方法
+</script>
+</body>
+</html>

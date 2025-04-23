@@ -1,0 +1,93 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Sample1_9</title>
+<style type="text/css">
+div.one{float:left;}
+div.two{float:left;}
+div.three{float:left;}
+
+</style>
+</head>
+<body>
+<p>从现在开始我们便来学习表格标签的使用，我们首先看到的是&lt;table&gt;标签的用法：</p>
+<div class="one">
+<p>此处为表格标签的基本用法：</p>
+<h4>只有一行一列的表格：</h4>
+<table border="1"><tr>
+  <td>100</td>
+</tr></table>
+
+<h4>一行三列的表格：</h4>
+<table border="1"><tr>
+  <td>100</td><td>200</td><td>300</td>
+</tr></table>
+
+<h4>两行三列的表格：</h4>
+<table border="1"><tr>
+  <td>100</td><td>200</td><td>300</td>
+</tr><tr>
+  <td>400</td><td>500</td><td>600</td>
+</tr></table>
+</div>
+<!--每个表格由table标签开始，表格行有tr标签开始，每个数据有td标签开始。-->
+
+<div class="two">
+<p>现在我们学习的是带有边框的表格：</p>
+<h4>带有普通的边框：</h4>
+<table border="1" class="left"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+
+<h4>带有粗的边框：</h4>
+<table border="8"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+
+<h4>带有很粗的边框：</h4>
+<table border="15"><tr>
+  <td>100</td><td>200</td>
+</tr><tr>
+  <td>300</td><td>400</td>
+</tr></table>
+
+<h4>这个表格没有边框：</h4>
+<table><tr>
+  <td>100</td><td>200</td><td>300</td>
+</tr><tr>
+  <td>400</td><td>500</td><td>600</td>
+</tr></table>
+</div>
+<!--上面演示的全为边框示例，其中没边框时可以不加border属性也可以使其值为0。
+border属性为边框的宽度。-->
+<div class="three">
+<p>接下来我们来演示表格中的标题与怎么样为表格添加标题：</p>
+<h4>表头：</h4>
+<table border="1">
+<tr><th>姓名</th><th>电话</th><th>电话</th>
+</tr><tr>
+  <td>张三</td><td>123456</td><td>123455</td>
+</tr></table>
+
+<h4>垂直的表头：</h4>
+<table border="1"><tr><th>姓名</th><td>李四</td>
+</tr><tr><th>电话</th><td>12345</td>
+</tr><tr><th>电话</th><td>21345</td>
+</tr></table>
+
+<h4>这个表格有一个标题，以及粗边框：</h4>
+<table border="6">
+<caption>这是我的标题</caption><tr>
+  <td>100</td><td>200</td><td>300</td>
+</tr><tr>
+  <td>400</td><td>500</td><td>600</td>
+</tr></table>
+</div>
+<!--表格的属性，行用tr表示，td表示列，th相当于表头，table表示表格，
+这几个标签构成表单最基本的样子。th为表格中的表头，caption为表格的标题。-->
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sample1_12</title>
+<script type="text/javascript">
+function change_header()
+{
+document.getElementById("myHeader").innerHTML="Nice day!";
+}
+</script>
+<style type="text/css">
+h1.intro {color:blue;}
+p.important {color:red;}
+<!--此处为样式表内容，在后面我会有介绍这里不做详细介绍。-->
+</style>
+<style type="text/css">
+h1.intro1{color:blue;}
+.important1{background-color:yellow;}
+</style>
+</head>
+<body>
+<p>我们首先来演示accesskey，其实质就是为某元素设置快捷键，使其获得焦点。</p>
+<a href="http://www.baidu.com" accesskey="b">百度（accesskey键设为b）</a><br />
+<a href="http://www.sina.com" accesskey="s">新浪（accesskey键设为s）</a>
+<!--请使用Alt+accesskey或者Shift+Alt+accesskey来访问带有指定快捷键的元素,一般
+本属性是用在<a>、<area>、button>、<input>、<label>、<legend>等标签中。-->
+<p>现在我们来演示class属性的应用，第一个示例为单个class值，
+第二个示例为一个标签应用多个class值。</p>
+<h1 class="intro">h1标题1演示单个class属性值</h1>
+<p class="important">请注意这个重要的段落。:)</p>
+<p>现在我们来演示一下应用多个classs值的案例：</p>
+<h1 class="intro1 important1">h1演示多个class属性，只要在声明第一个值时加上空格后写之后的值即可</h1>
+<!--class 属性大多数时候用于指向样式表中的类（class）。不过，也可以利用它通过 
+JavaScript 来改变带有指定 class 的 HTML 元素。-->
+<p>现在我们来讲述一下规定元素是否可编辑的属性的应用:</p>
+<p contenteditable="true">这里是一段可以编辑的段落，读者可以将光标点到这里自行编辑。</p>
+<!--需要注意的是元素中如果未设置contenteditable时，本元素会继承其父类元素。-->
+<p>接下来我们来看一下规定元素内容文本方向的属性的应用：</p>
+<p dir="rtl">文本方向为从右向左!</p>
+<!--dir 属性在以下标签中无效：<base>, <br>, <frame>, <frameset>, <hr>, <iframe>,
+ <param> 以及 <script>。dir的值有rtl与ltr两个值分别为右到左与左到右。-->
+<p>现在我们来看一下隐藏属性hidden，下面有两段话，一段有隐藏属性，一段没有隐藏属性：</p>
+<p hidden="hidden">这是一段隐藏的段落。</p>
+<p>这是一段可见的段落。上面还有一段隐藏段落，这里我们只是在做试验。</p>
+<!--hidden 属性也可用于防止用户查看元素，直到匹配某些条件（比如选择了某个复选框）。
+然后，JavaScript 可以删除 hidden 属性，以使此元素可见。-->
+<h1 id="myHeader">Hello World，这里我们演示的为id属性的应用，用JavaScript取得本元素id，然后改变本元素的内容。</h1>
+<button onclick="change_header()">改变文本</button>
+<!--id 属性规定 HTML 元素的唯一的 id，id 属性可用作链接锚（link anchor），
+通过 JavaScript（HTML DOM）或通过 CSS 为带有指定 id 的元素改变或添加样式。-->
+<p>这里为lang属性值的演示，lang属性值必须使用有效的ISO语言代码。</p>
+<p lang="fr">Ceci est un paragraphe.</p>
+<p lang="en">Hello , How are you?</p>
+<!--使用lang属性的目的是为让浏览器调整其表达元素内容的方式，使用lang属性可以使网页只显示某种特定语言。-->
+</body>
+</html>

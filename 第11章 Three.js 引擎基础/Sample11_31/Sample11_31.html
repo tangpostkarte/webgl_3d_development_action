@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>Sample11_31</title>
+    <script type="text/javascript" src="util/three.js"></script>
+
+    <script type="text/javascript" src="util/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="WebGL-output">
+</div>
+
+<script type="text/javascript">
+
+    function init() {
+        var scene = new THREE.Scene();//新建场景
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);//新建摄像机
+        var renderer = new THREE.WebGLRenderer();//新建渲染器
+        renderer.setClearColor(new THREE.Color(0x000000));//设置背景颜色
+        renderer.setSize(window.innerWidth, window.innerHeight);//设置窗口大小
+        renderer.shadowMap.enabled =true;
+        var boxGeometry = new THREE.BoxGeometry(15, 15, 15);//新建正方体
+        var box = withTextureMesh(boxGeometry, "box.jpg");//创建网格对象
+        box.castShadow = true;
+        //box.position = new THREE.Vector3(0,7,0);
+        //box.rotation.y = 60;
+        scene.add(box);//将正方体添加场景中
+        //设置摄像机的位置
+        camera.position.x = 60;
+        camera.position.y = 60;
+        camera.position.z = 60;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));//设置摄像机焦点
+        var ambietnColor = "#ffffff";
+        var ambient = new THREE.AmbientLight(ambietnColor);
+        ambient.intensity = 0.3;
+        scene.add(ambient);
+        var controls = new THREE.OrbitControls(camera,renderer.domElement);
+        controls.target.set(0,0,0);
+        //camera.position.set(30,30,30);
+        controls.update();
+        var spotColor ="#ffffff";
+		var light = new THREE.SpotLight(spotColor);
+        light.position.set(20, 40, 20);
+        light.shadow.mapSize.width=2048;			//阴影贴图宽度设置为1024像素
+        light.shadow.mapSize.height=2048;			//阴影贴图高度设置为1024像素
+        light.shadow.camera.near=0.1;					//设置投影近点
+        light.shadow.camera.far=100;					//设置投影远点
+        light.shadow.camera.fov=60;					//设置投影视场
+        light.angle=0.4;
+        light.castShadow =true;
+        scene.add(light);
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        var step = 0;
+
+        render();
+        function render() {
+            box.rotation.y = step += 0.01;//更新正方体的旋转角度
+            requestAnimationFrame(render);
+            //camera.updateMatrixWorld();
+            renderer.render(scene, camera);
+        }
+        //加载纹理
+        function withTextureMesh(geometry, imageName){//创建带有纹理的网格对象
+            var texloader = new THREE.TextureLoader();//创建纹理加载器
+            var texture =texloader.load("textures/" + imageName);//读取纹理贴图的数据
+            var mat = new THREE.MeshPhongMaterial();//新建Phong材质
+            mat.map = texture;//将读取的数据赋值给材质的map属性
+            var mesh = new THREE.Mesh(geometry, mat);//将带有的贴图的材质应用到几何对象上
+            return mesh;//返回网格对象
+        }
+    }
+    window.onload = init;
+</script>
+</body>
+</html>

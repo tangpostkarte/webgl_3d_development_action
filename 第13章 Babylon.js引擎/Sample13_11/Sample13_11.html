@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+    	<script src="bulid/babylon.custom.js"></script>
+        <style>
+
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+			
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+		
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = new BABYLON.Engine(canvas, true);
+
+        var createScene = function () {
+
+            var scene = new BABYLON.Scene(engine);
+            var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, 3 * Math.PI / 16, 15, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+        	
+			
+        	var redMat = new BABYLON.StandardMaterial("redMat", scene);
+        	redMat.emissiveColor = new BABYLON.Color3(1, 0, 0);
+        	
+        	var greenMat = new BABYLON.StandardMaterial("greenMat", scene);
+        	greenMat.emissiveColor = new BABYLON.Color3(0, 1, 0);
+        	
+        	var blueMat = new BABYLON.StandardMaterial("blueMat", scene);
+        	blueMat.emissiveColor = new BABYLON.Color3(0, 0, 1);
+        	
+        	var whiteMat = new BABYLON.StandardMaterial("whiteMat", scene);
+        	whiteMat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+        	
+        	
+			//创建中心球
+			var sphereCenter=BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 0.01}, scene);
+        	
+        	//红灯
+        	var lightRed = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 1.5, scene);
+        	lightRed.diffuse = new BABYLON.Color3(1, 0, 0);
+			lightRed.position.set(3,2,3);
+			lightRed.parent=sphereCenter;
+        	
+        	//绿灯
+        	var lightGreen = new BABYLON.SpotLight("spotLight1", new BABYLON.Vector3(), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 1.5, scene);
+        	lightGreen.diffuse = new BABYLON.Color3(0, 1, 0);
+        	lightGreen.position.set(-3,2,3);
+			lightGreen.parent=sphereCenter;
+
+        	//蓝灯
+        	var lightBlue = new BABYLON.SpotLight("spotLight2", new BABYLON.Vector3(), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 1.5, scene);
+        	lightBlue.diffuse = new BABYLON.Color3(0, 0, 1);
+			lightBlue.position.set(-3,2,-3);
+			lightBlue.parent=sphereCenter;
+        	
+        	//白灯
+        	var lightWhite = new BABYLON.SpotLight("spotLight3", new BABYLON.Vector3(), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 1.5, scene);
+        	lightWhite.diffuse = new BABYLON.Color3(1, 1, 1);
+			lightWhite.position.set(3,2,-3);
+			lightWhite.parent=sphereCenter;
+        	
+			//红色球体位置
+        	var redSphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 0.25}, scene);
+        	redSphere.material = redMat;
+        	redSphere.position = lightRed.position;
+			redSphere.parent=sphereCenter;
+
+        	
+			//绿色球体的位置
+        	var greenSphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 0.25}, scene);
+        	greenSphere.material = greenMat;
+        	greenSphere.position = lightGreen.position;
+			greenSphere.parent=sphereCenter;
+
+        	
+			//蓝色球体位置
+        	var blueSphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 0.25}, scene);
+        	blueSphere.material = blueMat;
+        	blueSphere.position = lightBlue.position;
+			blueSphere.parent=sphereCenter;
+
+
+        	
+			//白色球体位置
+        	var whiteSphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 0.25}, scene);
+        	whiteSphere.material = whiteMat;
+        	whiteSphere.position = lightWhite.position;
+			whiteSphere.parent=sphereCenter;
+
+        	
+			//地板材质
+        	var groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+
+			//创建地板
+        	var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 15, height: 15}, scene);	
+        	ground.material = groundMat;
+        
+
+        	//旋转角度
+			var angle=0;
+			scene.onBeforeRenderObservable.add(()=>{
+			    angle=angle+0.01;
+				//修改圆环结的旋转角度
+				sphereCenter.rotation.set(0,angle,0);
+			})
+            console.log(scene.ambientColor)
+			//创建GUI全屏纹理
+			var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+			var sceneAmbientColorFlag=false;
+            //左侧GUI
+            var leftPanel= createPanel(advancedTexture,BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT);
+            var senceCheckBox=createCheckbox(leftPanel,"开启场景环境颜色", BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT);
+
+            senceCheckBox.onIsCheckedChangedObservable.add(function (value) {
+                sceneAmbientColorFlag=value;
+                if(!sceneAmbientColorFlag) {
+                    scene.ambientColor=new BABYLON.Color3(0,0,0);
+                }
+            })
+            var senceColorPicker=createColorPicker(leftPanel,false,"",scene.ambientColor,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER);
+            senceColorPicker.onValueChangedObservable.add(function(value) {
+                if(sceneAmbientColorFlag) {
+                    scene.ambientColor.copyFrom(value);
+                }
+            });
+			var groudColorPicker=createColorPicker(leftPanel,true,"设置地板环境颜色",groundMat.ambientColor,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER);
+            groudColorPicker.onValueChangedObservable.add(function(value) {
+
+                    groundMat.ambientColor.copyFrom(value);
+            });
+			//右侧GUI
+			var rightPanel= createPanel(advancedTexture,BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT);
+            var diffuseColorPicker=createColorPicker(rightPanel,true,"漫反射颜色",groundMat.diffuseColor,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER);
+            diffuseColorPicker.onValueChangedObservable.add(function(value) {
+
+                    groundMat.diffuseColor.copyFrom(value);
+            });
+            var diffuseColorPicker=createColorPicker(rightPanel,true,"镜面反射颜色",groundMat.specularColor,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER);
+            diffuseColorPicker.onValueChangedObservable.add(function(value) {
+
+                groundMat.specularColor.copyFrom(value);
+            });
+            var emissiveColorPicker=createColorPicker(rightPanel,true,"自发光颜色",groundMat.emissiveColor,BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER);
+            emissiveColorPicker.onValueChangedObservable.add(function(value) {
+                groundMat.emissiveColor.copyFrom(value);
+            });
+
+            //创建单选框
+            function createCheckbox(panel,text,horizontalAlignment) {
+                //单选框
+                var checkbox = new BABYLON.GUI.Checkbox();
+                checkbox.width = "20px";
+                checkbox.height = "20px";
+                checkbox.isChecked = false;
+                checkbox.color = "green";
+                checkbox.onIsCheckedChangedObservable.add(function(value) {
+                    console.log(value);
+                });
+
+                //给单选框添加文字头
+                var header = BABYLON.GUI.Control.AddHeader(checkbox,text, "180px", {
+                    isHorizontal: true,
+                    controlFirst: true
+                });
+
+                header.height = "30px";
+                header.color = "white";
+                header.outlineWidth ="4px";
+                header.outlineColor ="black";
+                header.horizontalAlignment=horizontalAlignment;
+
+                //将文字头
+                panel.addControl(header);
+
+                return checkbox;
+            }
+
+			//创建Panel
+			function createPanel(advancedTexture,verticalAlignment,horizontalAlignment) {
+                var panel = new BABYLON.GUI.StackPanel();
+                panel.width = "200px";
+                panel.verticalAlignment = verticalAlignment;
+                panel.horizontalAlignment = horizontalAlignment;
+                advancedTexture.addControl(panel);
+                return panel;
+            }
+
+            //创建颜色控件
+            function createColorPicker(panel,usetext,text,defultColor,horizontalAlignment) {
+
+                //如果使用文本控件
+				if(usetext){
+					var textBlock = new BABYLON.GUI.TextBlock();
+    				textBlock.text = text;
+					textBlock.color = "white";
+    				textBlock.height = "30px";
+    				panel.addControl(textBlock); 
+				}
+				//创建颜色
+                var picker = new BABYLON.GUI.ColorPicker();
+                picker.value =defultColor;
+                picker.height = "150px";
+                picker.width = "150px";
+                picker.horizontalAlignment =horizontalAlignment;
+                picker.onValueChangedObservable.add(function(value) { });
+                panel.addControl(picker)
+                return picker;
+
+            }
+           
+            return scene;
+        
+        };
+        
+        var scene = createScene()
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        //窗口变化监听
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>

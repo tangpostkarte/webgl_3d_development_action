@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="56c6329a-ca29-409c-8cf1-d582b4c19e28" name="Default" comment="" />
+    <ignored path="$PROJECT_DIR$/.tmp/" />
+    <ignored path="$PROJECT_DIR$/temp/" />
+    <ignored path="$PROJECT_DIR$/tmp/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
+      <file leaf-file-name="example.html" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/example.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2135">
+              <caret line="201" column="70" selection-start-line="201" selection-start-column="70" selection-end-line="201" selection-end-column="70" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="OrbitControls.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/util/OrbitControls.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="648">
+              <caret line="24" column="25" selection-start-line="24" selection-start-column="25" selection-end-line="24" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="three.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/util/three.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="343440">
+              <caret line="12720" column="25" selection-start-line="12720" selection-start-column="17" selection-end-line="12720" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="bp.mtl" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/obj/bp.mtl">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3429">
+              <caret line="127" column="15" selection-start-line="127" selection-start-column="15" selection-end-line="127" selection-end-column="15" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MTLLoader.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/util/MTLLoader.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="891">
+              <caret line="33" column="33" selection-start-line="33" selection-start-column="33" selection-end-line="33" selection-end-column="33" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>addLightAndGUI</find>
+      <find>camera</find>
+      <find>clipPlanes</find>
+      <find>render</find>
+      <find>spotLight</find>
+      <find>helpers</find>
+      <find>postprocessing</find>
+      <find>change</find>
+      <find>shoot</find>
+      <find>mouse</find>
+      <find>animation</find>
+      <find>mouseHelper</find>
+      <find>minScale</find>
+      <find>loader.load( url, func</find>
+      <find>analyser</find>
+      <find>material</find>
+      <find>mesh</find>
+      <find>getFrequencyData</find>
+      <find>pm</find>
+      <find>loadTextureCube</find>
+      <find>materials</find>
+      <find>MeshLambertMaterial</find>
+      <find>skin</find>
+      <find>time</find>
+      <find>userData</find>
+    </findStrings>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/../three.js-master/examples/webgl_clipping_intersection.html" />
+        <option value="$PROJECT_DIR$/../three.js-master/examples/webgl_postprocessing_ssao.html" />
+        <option value="$PROJECT_DIR$/../three.js-master/examples/webgl_decals.html" />
+        <option value="$PROJECT_DIR$/../three.js-master/examples/webgl_loader_imagebitmap.html" />
+        <option value="$PROJECT_DIR$/../three.js-master/examples/webaudio_visualizer.html" />
+        <option value="$PROJECT_DIR$/obj/bp.mtl" />
+        <option value="$PROJECT_DIR$/util/MTLLoader.js" />
+        <option value="$PROJECT_DIR$/example.html" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsFlowSettings">
+    <service-enabled>false</service-enabled>
+    <exe-path />
+    <annotation-enable>false</annotation-enable>
+    <other-services-enabled>false</other-services-enabled>
+    <auto-save>true</auto-save>
+  </component>
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="NodePackageJsonFileManager">
+    <packageJsonPaths />
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="width" value="960" />
+    <option name="height" value="1040" />
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Data flow issuesJavaScript</id>
+          </State>
+          <State>
+            <id>Error handlingJavaScript</id>
+          </State>
+          <State>
+            <id>JavaScript</id>
+          </State>
+          <State>
+            <id>JavaScript validity issuesJavaScript</id>
+          </State>
+        </expanded-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="13_声音与距离" type="b2602c69:ProjectViewProjectNode" />
+              <item name="13_声音与距离" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="HbShouldOpenHtmlAsHb" value="" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="web.server" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\WebGL\Sample11_7\music" />
+      <recent name="E:\WebGL\Sample11_7\util" />
+      <recent name="E:\WebGL\Sample11_7\obj" />
+      <recent name="E:\WebGL\Sample11_7" />
+      <recent name="E:\WebGL\Sample11_7\img" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="56c6329a-ca29-409c-8cf1-d582b4c19e28" name="Default" comment="" />
+      <created>1516099828473</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1516099828473</updated>
+      <workItem from="1516099829920" duration="6030000" />
+      <workItem from="1516153111327" duration="19394000" />
+      <workItem from="1516191737561" duration="2176000" />
+      <workItem from="1516239293747" duration="2189000" />
+      <workItem from="1516242826334" duration="4041000" />
+      <workItem from="1516260367869" duration="4772000" />
+      <workItem from="1516274564876" duration="2974000" />
+      <workItem from="1516278557263" duration="2516000" />
+      <workItem from="1516325865741" duration="245000" />
+      <workItem from="1516326432543" duration="9031000" />
+      <workItem from="1516365559619" duration="1703000" />
+      <workItem from="1516411996762" duration="963000" />
+      <workItem from="1516430997517" duration="2331000" />
+      <workItem from="1516518250327" duration="13196000" />
+      <workItem from="1516584473070" duration="4451000" />
+      <workItem from="1516610782143" duration="5598000" />
+      <workItem from="1516670529234" duration="9273000" />
+      <workItem from="1516758344992" duration="1370000" />
+      <workItem from="1516762334403" duration="7253000" />
+      <workItem from="1516795213304" duration="3673000" />
+      <workItem from="1516842521312" duration="3552000" />
+      <workItem from="1517103451835" duration="13156000" />
+      <workItem from="1517190134504" duration="16547000" />
+      <workItem from="1519388984635" duration="423000" />
+      <workItem from="1519389793135" duration="6128000" />
+      <workItem from="1519444018163" duration="8120000" />
+      <workItem from="1519555961034" duration="5632000" />
+      <workItem from="1519603387661" duration="4792000" />
+      <workItem from="1519624492415" duration="12321000" />
+      <workItem from="1519779734483" duration="22760000" />
+      <workItem from="1519885647040" duration="3550000" />
+      <workItem from="1519972962031" duration="12181000" />
+      <workItem from="1520039268691" duration="8644000" />
+      <workItem from="1520062709275" duration="1332000" />
+      <workItem from="1527320707787" duration="93000" />
+      <workItem from="1527324393812" duration="13000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="222423000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17702845" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.32897604" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3280899" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/example.html</url>
+          <line>104</line>
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/../three.js-master/examples/webaudio_timing.html</url>
+          <line>129</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="2" />
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/img/earth.png" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_clipping_intersection.html" />
+    <entry file="file://$PROJECT_DIR$/util/OrbitControls.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/dat.gui.min.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example.html">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_clipping_intersection.html" />
+    <entry file="file://$PROJECT_DIR$/util/OrbitControls.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/dat.gui.min.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3782">
+          <caret line="122" selection-start-line="122" selection-end-line="122" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/OrbitControls.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/dat.gui.min.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_clipping_intersection.html" />
+    <entry file="file://$PROJECT_DIR$/example.html">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/dat.gui.min.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/three.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/RectAreaLightUniformsLib.js" />
+    <entry file="file://$PROJECT_DIR$/util/dat.gui.min.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/RectAreaLightUniformsLib.js" />
+    <entry file="file://$PROJECT_DIR$/img/earth.png" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_clipping_intersection.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_postprocessing_ssao.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_loader_assimp.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_decals.html" />
+    <entry file="file://$PROJECT_DIR$/json/pump.json" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_loader_imagebitmap.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_materials_texture_rotation.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_materials_blending_custom.html" />
+    <entry file="file://$PROJECT_DIR$/obj/cft.obj" />
+    <entry file="file://$PROJECT_DIR$/obj/yh.obj" />
+    <entry file="file://$PROJECT_DIR$/obj/qt.obj" />
+    <entry file="file://$PROJECT_DIR$/util/OBJLoader.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="124">
+          <caret line="4" column="9" selection-start-line="4" selection-start-column="9" selection-end-line="4" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/img/flower.png" />
+    <entry file="file://$PROJECT_DIR$/img/1.jpg" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_video_panorama_equirectangular.html" />
+    <entry file="file://$PROJECT_DIR$/img/xs.png" />
+    <entry file="file://$PROJECT_DIR$/img/lgq.png" />
+    <entry file="file://$PROJECT_DIR$/img/xg.png" />
+    <entry file="file://$PROJECT_DIR$/img/yg.png" />
+    <entry file="file://$PROJECT_DIR$/img/ys.png" />
+    <entry file="file://$PROJECT_DIR$/obj/bp.obj">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9937183" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/obj/bp.js" />
+    <entry file="file://$PROJECT_DIR$/util/three.module.js">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/MTLLoader.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="891">
+          <caret line="33" column="33" selection-start-line="33" selection-start-column="33" selection-end-line="33" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/obj/bp.mtl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3429">
+          <caret line="127" column="15" selection-start-line="127" selection-start-column="15" selection-end-line="127" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webaudio_visualizer.html" />
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webgl_materials_video.html" />
+    <entry file="jar://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar!/com/intellij/lang/javascript/index/predefined/EcmaScript.js" />
+    <entry file="file://$PROJECT_DIR$/util/three.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="343440">
+          <caret line="12720" column="25" selection-start-line="12720" selection-start-column="17" selection-end-line="12720" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util/OrbitControls.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="648">
+          <caret line="24" column="25" selection-start-line="24" selection-start-column="25" selection-end-line="24" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../three.js-master/examples/webaudio_timing.html" />
+    <entry file="file://$PROJECT_DIR$/example.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2135">
+          <caret line="201" column="70" selection-start-line="201" selection-start-column="70" selection-end-line="201" selection-end-column="70" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

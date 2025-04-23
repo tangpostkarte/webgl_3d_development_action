@@ -1,0 +1,67 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sample1_5</title></head>
+<body>
+<p>现在示例下拉列表，您喜欢的汽车牌子：
+<form>
+<select name="汽车">
+<option value="沃尔沃">沃尔沃</option>
+<option value="奔驰">奔驰</option>
+<option value="菲亚特">菲亚特</option>
+<option value="奥迪">奥迪</option>
+</select></form></p>
+<p>现在示例有预设值的下拉列表，您喜欢的汽车牌子为：
+<form>
+<select name="汽车">
+<option value="沃尔沃">沃尔沃</option>
+<option value="奔驰">奔驰</option>
+<option value="菲亚特">菲亚特</option>
+<option value="奥迪" selected="selected">奥迪</option>
+</select></form></p>
+<!--上面为大家演示了两种下拉列表，第一种没有预设值，
+第二种多了一个selected属性即设定预设值-->
+<p>这里将要给大家演示多行输入文本</p>
+<textarea rows="10" cols="30">
+Textarea标签定义多行的文本输入控件，其中文本的字体默认为等宽字体。
+可以通过 cols 和 rows 属性来规定 textarea 的尺寸，不过更好的办法是
+使用 CSS 的 height 和 width 属性。</textarea>
+<!--在文本输入区内的文本行间，用 "%OD%OA" （回车/换行）进行分隔。
+可以通过wrap属性设置文本输入区内的换行模式-->
+<p>下面我们将要介绍按钮标签：在 &lt;button&gt; 元素内部，您可以放置内容，
+比如文本或图像。这是该元素与使用 &lt;input&gt; 元素创建的按钮之间的不同之处。</p>
+<button type="button">按钮1</button>
+<form><input type="button" value="按钮2" /></form>
+<!--需要注意的是请始终为按钮规定 type 属性。Internet Explorer 的默认类型是 "button"，
+而其他浏览器中（包括 W3C 规范）的默认值是 "submit"。-->
+<!--如果在 HTML 表单中使用 button 元素，不同的浏览器会提交不同的值。Internet Explorer 
+将提交 <button> 与 <button/> 之间的文本，而其他浏览器将提交 value 属性的内容。
+请在 HTML 表单中使用 input 元素来创建按钮。-->
+<p>接下来我们来看一下围绕数据的&lt;fieldset&gt;标签：如果
+浏览器没有显示边框，则为浏览器版本老旧造成的。</p>
+<form><fieldset>
+    <legend>健康信息</legend>
+    身高：<input type="text" />
+    体重：<input type="text" />
+  </fieldset></form><!--legend标签定义fieldset标签的标题-->
+  <!--当一组表单元素放到 <fieldset> 标签内时，浏览器会以特殊
+  方式来显示它们，该标签没有必需或者唯一的属性。-->
+<p>下面我们来介绍元素组合选项标签&lt;optgroup&gt;:</p>
+<select>
+  <optgroup label="美国产的车">
+    <option value="ford">福特</option>
+    <option value="chevrolet">雪佛兰</option>
+  </optgroup>
+  <optgroup label="德国产的车">
+    <option value="mercedes">奔驰</option>
+    <option value="audi">奥迪</option>
+  </optgroup></select><!--option标签定义下拉列表中一个项目，没有结束标签，常与select一起使用。-->
+  <!--optgroup 元素用于组合选项。当您使用一个长的选项列表时，对相关的选项进行组合会使处理更加容易。-->
+  <p>接下来我们看到是&lt;output&gt;标签的使用，&lt;output&gt;标签定义不同类型的输出</p>
+  <form oninput="x.value=parseInt(a.value)+parseInt(b.value)">0
+<input type="range" id="a" value="50">100
++<input type="number" id="b" value="50">
+=<output name="x" for="a b"></output><!--需要注意的是在IE浏览器中不支持这个标签。-->
+</form>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Spinning WebGL Box</title>
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>	
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>	
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+	<script type="text/javascript" src="js/util/Onclick.js"></script>
+	<script type="text/javascript" src="js/TextureRect.js"></script>
+	<script>
+        'use strict';
+			var textId32=new Array();
+			var textId256=new Array();
+			var currText32;	//当前纹理
+			var currText256;//当前纹理
+			var textsize;
+			//绕y轴旋转角度
+			var currentYAngle=0;
+			//绕x轴旋转角度
+			var currentXAngle=0;
+			//旋转角度步长值
+			var incAngle=0.5;
+			//上次触控点X,Y坐标
+			var lastClickX,lastClickY;
+			var lastx,lasty;
+			var ismoved=false;//是否移动标志位
+			document.onmousedown=function(event)
+				{
+					
+						lastClickX=event.clientX;
+						lastClickY=event.clientY;
+						ismoved=true;
+				};		
+			//鼠标移动时的监听
+			document.onmousemove = function(event)
+				{
+				var x=event.clientX,y=event.clientY;
+				if(ismoved)
+				{
+					currentYAngle=currentYAngle+(x-lastClickX)*incAngle;
+					currentXAngle=currentXAngle+(y-lastClickY)*incAngle;
+				}
+				lastClickX=x;
+				lastClickY=y;
+				};
+			//鼠标抬起的监听
+			document.onmouseup=function(event){
+				ismoved=false;
+				lastClickX=event.clientX;
+				lastClickY=event.clientY;
+				};
+			//初始化的方法
+			function start()
+			{
+                //获取3D Canvas
+                var canvas = document.getElementById('bncanvas');
+                //获取GL上下文
+                gl = canvas.getContext('webgl2', { antialias: false });
+                if (!gl) //若获取GL上下文失败
+                {
+                    alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                    return;
+                }
+			
+			canvas.ontouchstart=function(e){
+			var touch = e.touches[0];
+			//获取当前触控点的坐标，等同于MouseEvent事件的clientX/clientY
+			 lastx = touch.clientX;
+			 lasty = touch.clientY;
+			};
+			canvas.ontouchmove = function(e){
+				e.preventDefault();
+				var touch = e.touches[0];
+				var x=touch.clientX;
+				var y=touch.clientY;
+				currentYAngle=currentYAngle+(x-lastx)*incAngle;
+				currentXAngle=currentXAngle+(y-lasty)*incAngle;
+			};
+			canvas.ontouchup = function(e){
+			};
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(0.0,0.0,0.0,1.0);  
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        //设置摄像机
+			ms.setCamera(0,0,-2,0,0,0,0,1,0);
+	        //设置投影参数
+	        ms.setProjectFrustum(-1.5,1.5,-1,1,1,100);
+	        gl.enable(gl.DEPTH_TEST);//开启深度检测
+                //加载着色器程序
+                loadShaderFile("shader/vtrtex.bns",0,0);//带光照的物体
+                loadShaderFile("shader/fragment.bns",0,1);//带光照的物体
+			if(shaderProgArray[0])//如果着色器已加载完毕
+				{textload();}
+			else{
+				setTimeout(function(){textload();},100);
+				}
+			function textload()
+			{	textsize=new TextureRect(gl,shaderProgArray[0]);
+				
+			}
+			textId32[0]=loadImageTexture(gl, "pic/bw32.png",gl.NEAREST,gl.NEAREST);
+			textId32[1]=loadImageTexture(gl, "pic/bw32.png",gl.LINEAR,gl.LINEAR);
+			textId32[2]=loadImageTexture(gl, "pic/bw32.png",gl.NEAREST,gl.LINEAR);
+			textId32[3]=loadImageTexture(gl, "pic/bw32.png",gl.LINEAR,gl.NEAREST);
+			textId256[0]=loadImageTexture(gl, "pic/bw256.png",gl.NEAREST,gl.NEAREST);
+			textId256[1]=loadImageTexture(gl, "pic/bw256.png",gl.LINEAR,gl.LINEAR);
+			textId256[2]=loadImageTexture(gl, "pic/bw256.png",gl.NEAREST,gl.LINEAR);
+			textId256[3]=loadImageTexture(gl, "pic/bw256.png",gl.LINEAR,gl.NEAREST);
+			currText32=textId32[0];
+			currText256=textId256[0];
+			setInterval("drawFrame();",20);
+			}
+			function drawFrame()
+			{
+				if(!textsize)
+				{			
+				console.log("加载未完成！");//提示信息
+				return;
+				}
+				//清除着色缓冲与深度缓冲
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  
+				//保护现场
+				ms.pushMatrix(); 
+				ms.translate(2.1, 1.5, 0);
+				ms.scale(0.1,0.1,0.1);
+				//绘制物体
+				textsize.drawSelf(ms,currText256);
+				//恢复现场
+				ms.popMatrix();
+				ms.pushMatrix(); 
+				ms.translate(1.5, 0, 0);
+				ms.scale(0.3,0.3,0.3)
+				//绘制物体
+				textsize.drawSelf(ms,currText32);
+				//恢复现场
+				ms.popMatrix();
+			}
+		</script>
+	</head>
+	
+	<body onload="start();">
+		采&nbsp;样&nbsp;方&nbsp;式&nbsp;：
+		<input   type="radio"   name="size"   value="NN" onclick="getRadio()"checked="checked">NN   	&nbsp;&nbsp;&nbsp;
+		<input   type="radio"   name="size"   value="LL" onclick="getRadio()">LL  	&nbsp;&nbsp;&nbsp;
+		<input   type="radio"   name="size"   value="NL" onclick="getRadio()">NL	&nbsp;&nbsp;&nbsp;
+		<input   type="radio"   name="size"   value="LN" onclick="getRadio()">LN	&nbsp;&nbsp;&nbsp;
+		<br></br>
+		<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+		</canvas>
+		
+	</body>
+</html>

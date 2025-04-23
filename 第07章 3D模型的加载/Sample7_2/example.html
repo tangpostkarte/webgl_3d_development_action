@@ -1,0 +1,96 @@
+<html>
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Load OBJ</title>
+  <!--库js的引入-->
+	<script type="text/javascript" src="js/util/Matrix.js"></script>
+	<script type="text/javascript" src="js/util/MatrixState.js"></script>
+	<script type="text/javascript" src="js/util/GLUtil.js"></script>
+	<script type="text/javascript" src="js/util/LoadShaderUtil.js"></script>
+	<script type="text/javascript" src="js/util/LightManager.js"></script>
+	<script type="text/javascript" src="js/util/LoadObjUtil.js"></script>
+	<script type="text/javascript" src="js/util/ObjObject.js"></script>
+	<script type="text/javascript" src="js/util/FrameGlobalVar.js"></script>
+		<script type="text/javascript" src="js/util/mouseListener.js"></script>
+	<!--应用特有js的引入-->
+	<script type="text/javascript" src="js/GlobalVar.js"></script>
+	<script type="text/javascript" src="js/loadBall.js"></script>
+	<script>
+        'use strict';
+        var currentAngle;
+        var incAngle;
+        mouseListener();
+	    //初始化的方法
+	    function start()
+	    {
+            //获取3D Canvas
+            var canvas = document.getElementById('bncanvas');
+            //获取GL上下文
+            gl = canvas.getContext('webgl2', { antialias: true });
+            if (!gl) //若获取GL上下文失败
+            {
+                alert("创建GLES上下文失败，不支持webGL2.0!");//显示错误提示信息
+                return;
+            }
+
+	        //初始化3D画布参数
+	        var canvas = document.getElementById('bncanvas');
+	        //设置视口
+	        gl.viewport(0, 0, canvas.width, canvas.height);
+	        //设置屏幕背景色RGBA
+	        gl.clearColor(0.0,0.0,0.0,1.0);
+	        //初始化变换矩阵
+	        ms.setInitStack();
+	        //设置摄像机
+	        ms.setCamera(0,50,100,0,0,0,0,1,0);
+	        //设置投影
+	        ms.setProjectFrustum(-1.5,1.5,-1,1,3,400);
+
+            //加载着色器程序
+            loadShaderFile("shader/vtrtex.bns",0);//带光照的物体
+			setTimeout(function () {
+                loadShaderFile("shader/fragment.bns",0);//带光照的物体
+            },300);
+
+
+	        //着色器加载完了加载绘制者
+			loadObjFile("obj/ch.obj");
+
+	        //初始化旋转角度
+	        currentAngle = 0;
+	        //初始化角度步进
+	        incAngle = 1;
+	        //绘制画面
+	        setInterval("drawFrame();",30);
+	    }
+
+	    //绘制一帧画面的方法
+	    function drawFrame()
+	    {
+	        //若还没有加载完则不绘制
+	        if(!ooTri) {return;}
+
+	        //清除着色缓冲与深度缓冲
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	        //保护现场
+	        ms.pushMatrix();
+            //执行绕Y轴旋转
+			//ms.rotate(30,1,0,0);
+            ms.rotate(currentYAngle,0,1,0);
+            //执行绕X轴旋转
+            ms.rotate(currentXAngle,1,0,0);
+            //绘制地球
+            ooTri.drawSelf(ms);
+            //恢复现场
+            ms.popMatrix();
+	    }
+	</script>
+</head>
+
+<body onload="start();">
+	<canvas height="800" width="1200" id="bncanvas">
+	    若看到这个文字，说明浏览器不支持WebGL!
+	</canvas>
+</body>
+</html>
